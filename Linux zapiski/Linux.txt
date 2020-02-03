@@ -1,0 +1,696 @@
+﻿Linux paket, ki ima že prednameščene stvari (izbereš kaj hočeš): Turnkey (pogooglaj)
+
+
+SVEŽ REPOSITORY: sudo apt-get update
+INŠTALIRA TE UPDEJTE: sudo apt-get upgrade
+UPDEJTA ZAJEBANE STVARI: sudo apt-get upgrade
+
+
+SPISEK FILE / FOLDER + NJIHOVO LASTNIŠTVO: sudo ls -la prikaže lastništvo 
+
+SPREMINJANJE LASTNIŠTVA USERJA: sudo chown -R "username" "folder"
+SPREMINJANJE LASTNIŠTVA GRUPE: sudo chgrp -R "grupa" "folder"
+SPREMINJANJE PRAVIC: sudo chmod 777 -R "folder"
+
+
+DOVOLJENJE EXECUTANJA SKRIPTE (V MOJEM PRIMERU .pl): chmod + x "ime skripte
+
+
+PRIJAVA KOT SUPER USER: su -i
+
+
+SPREMINJANJE KEYBOARD LAYOUTA RPi: sudo dpkg-reconfigure keyboard-configuration
+
+
+**POWER SAVING RPi: apt-get instal xll-xserver-utils -> odpri: ~/.xinitrc -> 
+xset s off         # don't activate screensaver
+xset -dpms         # disable DPMS (Energy Star) features.
+xset s noblank     # don't blank the video device
+
+exec /etc/alternatives/x-session-manager      # start lxde
+
+
+UREJANJE CONFIG.TXT v RPi: sudo nano /boot/config.txt (za izhod ctrl + x)
+UREJANJE DATOTEKE Z JOE: sudo joe "filename" (shraniš s ctrl + x + k)
+
+
+PRIKAZ IP-JEV IN PODATKOV O MREŽNIH KARTICAH: ifconfig
+PRIKAZ PODATKOV O WIRELESS KARTICAH: iwconfig
+
+
+START NETWORKING:
+/etc/init.d/networking start
+
+
+NASTAVITVE IP DEBIAN:
+sudo nano /etc/network/interfaces
+iface eth0 inet static
+address 192.168.1.4
+netmask 255.255.255.0
+gateway 192.168.1.1
+
+NASTAVITVE DNS:
+sudo nano /etc/resolv.conf
+nameserver x.x.x.x
+
+NASTAVITVE IP CENTOS 6
+## Configure eth0
+#
+# vi /etc/sysconfig/network-scripts/ifcfg-eth0
+
+DEVICE="eth0"
+NM_CONTROLLED="yes"
+ONBOOT=yes
+HWADDR=A4:BA:DB:37:F1:04
+TYPE=Ethernet
+BOOTPROTO=static
+NAME="System eth0"
+UUID=5fb06bd0-0bb0-7ffb-45f1-d6edd65f3e03
+IPADDR=192.168.1.44
+NETMASK=255.255.255.0
+
+
+## Configure Default Gateway
+#
+# vi /etc/sysconfig/network
+
+NETWORKING=yes
+HOSTNAME=centos6
+GATEWAY=192.168.1.1
+
+
+## Restart Network Interface
+#
+
+/etc/init.d/network restart
+
+## Configure DNS Server
+#
+# vi /etc/resolv.conf
+
+nameserver 8.8.8.8      # Replace with your nameserver ip
+nameserver 192.168.1.1  # Replace with your nameserver ip
+
+
+PREVERI ROUTE:
+netstat -rn
+route -n
+
+PREVERI PORTE NA KATERIH SERVER POSLUŠA:
+netstat -lnpt
+netstat -pnutl
+
+PRIKAŽI TRENUTN VZPOSTAVLJENE POVEZAVE S SERVERJEM:
+netstat -pt
+
+PREVERI ČE JE NA NEKEM SERVERJU PORT ODPRT:
+nc -vz 192.168.10.200 6443
+
+
+
+HITRE NASTAVITVE IP: (SE NE SHRANIJO PO REBOOTU)
+ifconfig x.x.x.x/24 up
+route add default gw 192.168.1.1
+echo nameserver x.x.x.x > /etc/resolv.conf
+
+
+NASTAVITVE HOSTNAME:
+hostnamectl set-hostname 'SRBIN'
+
+
+PREVERJANJE FREE MEMORY:
+free -h
+
+
+ALIAS: Za permanentno shranjevanje aliasov jih shranimo v .bashrc fajl. Komanda je ista tako za terminal, kot tudi fajl.
+alias kubectl='microk8s.kubectl' ; microk8s.kubectl komando bomo zdaj skrajšali v samo kubectl.
+
+GREP:
+grep -i ; grepa case insensitive
+grep -A 3 ; grepa 3 vrstice za rezultatom (after)
+grep -B 3 ; grepa 3 vrstice pred rezultatom (before)
+
+SPREMLJANJE OUTPUTA NEKE KOMANDE, BREZ DA BI JO PONOVNO VNAŠALI (v primeru npr. komanda kubectl):
+watch kubectl get all -o wide 
+
+
+PREVERI KOLIKO CPUJEV IMA MAŠINA:
+nproc
+
+MANIPULIRANJE Z DISKI IN PARTICIJAMI (LVM) ----Celoten LVM dopolni
+-Volume Group (vg): vgdisplay
+Skupek physical in logical volumov. Tipično potrebujejo sistemi samo en Volume Group, ki vsebuje vse physical in logical volume na sistemu. Naj nosi ime enako kot ime mašine. 
+
+Physical volume: pvdisplay
+Physical volume je enako kot disk. So block device, ki nudi disk space logical volumom.
+
+Logical Volume (lvm): lvdisplay
+Logical volume se obnaša kot particija. Nosijo filesystem. Za razliko od particije pa so logical volumi namesto poimenovani z imenom, namesto s številko. Lahko se razprostirajo čez več diskov in ni potrebno da so na istem fizičnem disku.
+
+**RPi CONFIG: sudo raspi-config
+
+
+**RPi AUTO STARTX (GUI)
+sudo nano /etc/rc.local
+(V vrstico pred exit 0 vpišeš)
+su pi -c startx
+
+
+START SSH SERVER:
+sudo /etc/init.d/ssh start 
+update-rc.d -f ssh defaults (ZA AUTOSTART ON BOOT)
+
+
+SSH KREIRANJE KLJUČA IN KOPIRANJE PUBLIC KLJUČA NA ŽELENI SERVER:
+Ime in passphraze sem pustil default/prazno. Če sem ključu dodelil neko ime/passphraze, me je server še vedno spraševal za password. Ključ (id_rsa in id_rsa.pub), ki smo ga ustvarili naj bo vedno shranjen v ~/.shh.
+
+ssh-keygen ; Ustvarimo ključ. Po defaultu se nam shrani v mapo kjer se nahajamo. Dajmo ga raje v ~/.ssh folder.
+ssh-copy-id dragan@192.168.10.218 ; Ključ kopiramo na server 192.168.10.218, v userja dragan. Server nas za tem ne bi smel več spraševati za password, ko se povezujemo kot "ssh dragan@192.168.10.218".
+
+
+**RPi SSH SERVER (KREIRANJE KLJUČEV, PONOVI ENAK POSTOPEK TUDI ZA DSA IN ECDSA KLJUČE):
+sudo ssh-keygen -t rsa
+/etc/ssh/ssh_host_rsa_key
+(v RPi brez passphrase zradi "could not load" errorjev)
+
+service ssh start
+update-rc.d -f ssh defaults
+
+SSH PORT TUNNELING:
+ssh -L 3389:192.168.9.90:3389 igor@hydrawarehouse.com (LEVI PORT KAM TUNELIRAŠ, DESNI KAJ TUNELIRAŠ) 
+
+
+KOPIRANJE DATOTEKE: 
+sudo cp configuration.php ../dragan/smucanje (dve piki pomenita, da se postavi nivo višje)
+sudo cp configuration.php /var/www/dragan/smucanje
+
+
+KOPIRANJE MAPE
+sudo cp hydrawarehouse -R dragan/hydrawarehouse
+
+
+BRISANJE DATOTEKE IN MAPE:
+sudo rm -rf "imemape" (-rf pomeni recursive in forced, samo za mape)
+
+
+SEARCH:
+update db
+locate "ime"
+
+
+IZPIŠI LISTO DOMAIN USERJEV:
+wbinfo -u
+
+
+IZPIS PROCESOV IN ČAS, KI GA POTREBUJEJO OB BOOTU:
+systemd-analyze blame
+
+
+**RPi NO TASKBAR ISSUE (HEADLESS RPi)
+cp -rp /etc/xdg/lxpanel/profile/LXDE/* ~/.config/lxpanel/LXDE/
+
+
+MOUNT USB FLASH DRIVE WHEN STARTX IS NOT RUNNING:
+tail -f /var/log/messages (po tej komandi vstavi USB flash, da vidiš ali je sda1, sdb1...)
+mount -t vfat -o rw /dev/sda1 /media/usbstick/ (!!as root)
+sudo mount -t vfat -o uid=pi,gid=pi /dev/sda1 /media/usbstick/ (!!as user pi, else no read/write access)
+
+
+PREVENT AUTOMOUNT WHEN STARTX (LXDE) IS RUNNING
+nano /home/pi/.config/pcmanfm/LXDE-pi/pcmanfm.conf
+[volume]
+mount_on_startup=0
+mount_removable=0
+
+
+MOUNT NETWORK SHARE (UNTILL REBOOT):
+sudo mkdir /mnt/randomname
+sudo mount -t cifs -o username=yourusername,password=yourpassword //192.168.1.10/share1 /mnt/randomname
+df -h (preveri če je mountano)
+
+
+MOUNT NETWORK SHARE (PERMANENT):
+sudo nano /etc/fstab
+//192.168.1.10/Film /mnt/randomname cifs username=yourusername,password=yourpassword 0 0
+more /etc/fstab (preveri če se je fstab sprememnba shranila)
+reboot
+df -h (preveri če je mountano)
+
+
+UNMOUNT NETWORK SHARE:
+sudo umount //192.168.1.10/Film
+
+
+**MINT RESTART CINNAMON: Alt + F2, nato r
+
+
+**MINIDLNA CONFIG FILE:
+sudo nano /etc/minidlna.conf 
+sudo service minidlna force-reload
+
+
+**MINIDLNA MEDIA FILES FROM USB:
+sudo blkid (dobimo ID diska)
+sudo mkdir -p /media/USB
+sudo chmod 755 /media/USB
+sudo nano /etc/fstab
+UUID=624C20AA4C207B45 /media/USB  ntfs    0      0
+sudo nano /etc/minidlna.conf
+media_dir=/media/USB
+sudo service minidlna force-reload
+
+
+**SAMBA CONFIG:
+sudo apt-get install samba samba-common-bin libpam-smbpass (libpam-smbpass sinhronizira UNIX in samba passworde)
+sudo nano /etc/samba/smb.conf
+security = user (odkomentiraj)
+[Media]
+   comment = Public
+   path = /media
+   valid users = @users
+   force group = users
+   create mask = 0660
+   directory mask = 0771
+   read only = no
+sudo service samba restart
+
+SAMBA DODATEK:
+Odkar je verzija sambe zaradi exploita bila posodobljena na SMBv2, browse po SMB serverju ni več dovoljen. Za mount network driva v Windowsu iz nekega linux hosta (npr. libreelec), je potrebno točno poznati shared ime mape, ki jo host shara. V mojem primeru sem moral mountati network drive tako: 
+\\libreelec\PNY_8GB. Zanimivo, da je PNY_8GB ime voluma, ki sem ga sam določil med formatom ključka.
+Prav tako je obvezno, da je mapa sharana s passwordom, saj v nasprotnem primeru Windows ne pusti, da odpreš shared mapo (You cant access this shared folder, because your organization's security policies block unauthenticated guest access). To lahko odpraviš v gpedit.msc, vendar je bolje, da preprosto sharaš s passwordom.
+
+
+SPISEK SHARANIH MAP PREKO SAMBE:
+smbclient -L localhost
+
+
+NTFS SUPPORT (NEZMOŽNOST BRISANJA IZ USB KLJUČKA): sudo apt-get install ntfs-3g
+
+
+MOUNT VSEGA KAR JE V FSTAB: sudo mount -a
+
+
+**INADYN CREATE CONFIG FILE:
+sudo nano /etc/inadyn.conf
+--username dacrade
+--password tvojpassword
+--update_period 60000
+--forced_update_period 320000
+--alias dragane.ignorelist.com,VVFAcjFLMzFVMVVBQUNDS3hNSUFBQUFDOjkwMTM0NDk=
+--background
+--dyndns_system default@freedns.afraid.org
+--syslog
+
+
+**INADYN AUTOSTART ON BOOT (RC.LOCAL):
+sudo nano /etc/rc.local (pred exit 0 vpiši spodnjo linijo)
+/usr/sbin/inadyn
+
+
+**LibreElec AP WiFi TETHERING
+LibreElec (Kodi) lahko deluje kot WiFi Access Point, če je povezan s kablom. Uporablja service imenovan connman. Ta nastavitev se omogoči v Kodi nastavitvah: Settings > LibreElec > Network > Enable Tethered Wireless Access Point. Ko se na ta AP povežemo, deluje Kodi kot DHCP. Ker kodi interface nima možnosti nastavitve, kakšen DNS naj imajo klienti, se po defaultu dodeli 8.8.8.8. Če tega DNS ne želimo, je potrebno v configu (/etc/connman/main.conf) to ročno spremeniti. Ker je config Read Only, ga ne moremo urejati. Zato obstaja workaround. Config main.conf najprej skopiramo
+cp /etc/connman/main.conf /storage/.config/connman_main.conf. Nato pa v tem fajlu urediš: FallbackNameservers = 192.168.1.13. 
+
+
+FORMAT USB STICK TO FAT32
+sudo apt-get install dosfstools
+df -h
+umount /dev/sda1
+sudo mkdosfs -F 32 -I /dev/sda1
+mount /dev/sda1 /media/usb0
+
+
+**RPi BOOT FROM USB INSTEAD OF SD CARD
+sudo dd if=/dev/mmcblk0p2 of=/dev/sda1 bs=512 (pazi da je sda1 ta USB, ki ga hočeš za boot. Traja nekaj min.)
+sudo nano /boot/cmdline.txt
+root=/dev/mmcblk0p2 spremeni v /dev/sda1
+sudo nano /etc/fstab
+/dev/mmcblk0p2 sprememni v /dev/sda1
+sudo reboot
+sudo resize2fs /dev/sda1 (spet nekaj min.)
+
+
+POČISTI ZASLON: clear
+
+
+EXTRACT .tar: tar xzvf ".tar file location"
+
+
+ZGODOVINA VPISANIH KOMAND
+history
+
+SPISEK VSEH SERVICOV NA VOLJO IN NJIHOVA NASTAVITEV CENTOS
+chkconfig
+
+DODAJ REPOSITORY CENTOS:
+rpm -Uvh (url do rpm ali lokacija rpm fajla)
+
+ODSTRANI REPOSITORY CENTOS (PRIMER)
+# rpm -qf /etc/yum.repos.d/rpmforge.repo
+rpmforge-release-0.5.1-1.el5.rf
+# yum remove rpmforge-release
+
+
+
+PREVERI VSEBINO ENEGA FAJLA Z DRUGIM. GRE ČEZ VSAKO VRSTICO ENEGA FAJLA IN PRIMERJA Z VSAKO VRSTICO DRUGEGA FAJLA.
+grep -Fxv -f file1 file2
+
+
+NETWORK NASTAVITVE V UBUNTU 18.4
+Zlistamo vse network interface:
+ls /sys/class/net
+
+Za IP nastavitve se zdaj ne uporablja več /etc/network/interfaces ampak yaml file. Ko urejamo ta fajl moramo paziti, da ne uporabljamo TAB ampak space. Oblika mora biti taka, kot so že obstoječe zadeve znotraj fajla.
+sudo nano /etc/netplan/50-cloud-init.yaml
+sudo netplan apply
+
+Izbris route:
+Eno ruto sem moral izbrisati, saj sem ob kreiranju drugega network interfaca imel dve ruti, ki sta ob destinaciji 0.0.0.0 kazali na dva različna gatewaya. Razlika je bila le v weightu.
+	sudo route del -net 0.0.0.0 gw 172.42.42.1
+
+
+NETWORK - NASTAVITVE IP NA CENTOS 6:
+sudo su -
+
+cat /etc/sysconfig/network |grep -i network
+This should return: NETWORKING=yes - If it does not, then change it to yes.
+
+vi /etc/sysconfig/network-scripts/ifcfg-eth0
+This should look like:
+
+DEVICE="eth0"
+HWADDR="08:00:27:07:9e:57"
+NM_CONTROLLED="YES"
+ONBOOT="NO"
+There are a few options that we want to change here, NM_CONTROLLED needs to be NO, ONBOOT needs to be YES, and finally add this code at the bottom:
+
+BOOTPROTO="dhcp"
+This will allow you to grab an IP from your DHCP and essentially enable IPV4.
+
+Now the whole file should look like this:
+
+DEVICE="eth0"
+HWADDR="08:00:27:07:9e:57"
+NM_CONTROLLED="NO"
+ONBOOT="YES"
+BOOTPROTO="dhcp"
+Save and close. Now, lets restart the network service to reload with these settings:
+
+[root@Development ~]# service network restart
+Shutting down interface eth0:                              [  OK  ]
+Shutting down loopback interface:                          [  OK  ]
+Bringing up loopback interface:                            [  OK  ]
+Bringing up interface eth0:
+Determining IP information for eth0... done.
+                                                           [  OK  ]
+Notice the ‘eth0′ – awesome! Now lets check to see if we got an IPV4 from our DHCP:
+
+ifconfig
+You should now see 'eth0'.
+
+
+
+WRITE PROTECT FILE
+# chattr +i data.txt
+
+
+
+DISABLE WRITE PROTECTION
+# chattr -i data.txt
+
+
+
+ENABLE EXECUTE FOR 1. USER OWNER OF THE FILE, 2. ALL
+1. chmod u+x testfajl.sh
+2. chmod a+x testfajl.sh
+
+DISABLE EXECUTE FOR 1. USER OWNER OF THE FILE, 2. ALL
+1. chmod u-x testfajl.sh
+2. chmod a-x testfajl.sh
+
+
+
+SEARCHING FILES OR DIRS WITH find
+# find starting-dir(s) matching-criteria-and-actions
+
+-atime n - File was last accessed exactly n days ago.
+-mtime n - File was last modified exactly n days ago.
+-newer datoteka - File was modified more recently than datoteka was.
+-size n - File is n 512-byte blocks long (rounded up to next block).
+-type - Specifies the file type: f=plain file, d=directory, etc.
+-fstype xx - Specifies filesystem type.
+-name nam - The filename is nam.
+-perm - The file’s access mode is p.
+-user usr - The file’s owner is usr.
+-group grp - The file’s group owner is grp.
+-nouser - The file’s owner is not listed in the password file.
+-nogroup - The file’s group owner is not listed in the group file.
+
+Uporaba:
+-mtime +7 - Last modified more than 7 days ago
+-atime -2 - Last accessed less than 2 days ago
+-size +100 - Larger than 50K
+-atime +60 -mtime +120
+
+
+CHECK IF SOFTWARE ALREADY INSTALLED (SEE IF AND WHERE THE RELEVANT BINARY IS):
+# which nano
+/usr/bin/nano
+
+Če which zadeve ne najde, poizkusi z "whereis" komando, ki je neodvisna od PATH:
+whereis nano
+nano: /usr/bin/nano /usr/share/nano /usr/share/man/man1/nano.1.gz
+
+Alternativa je komanda "locate". V CentOS je potrebno namestiti "mlocate" package. Pred iskanjem naredi index s komando "updatedb".
+
+V primeru da veš ime paketa, preveriš, če je nameščen z "rpm -q".
+rpm -q python
+python-2.7.5-58.el7.x86_64
+
+Pogledaš kateremu paketu pripada specifičen file.
+rpm -qf /usr/bin/nano
+nano-2.3.1-10.el7.x86_64
+
+Na Ubuntu: dpkg-query -S /etc/apache2
+
+BUILDING SOFTWARE FROM SOURCE CODE
+
+
+
+
+SYSTEMD - Entiteta, ki jo systemd upravlja se imenuje "unit". Upravljanje se izvaja preko unit datoteke. V primeru, da je ta entiteta npr. service, je v unit datoteki navedena lokacija executable fajla za daemona, navedeno kako se service požene in ustavi ter identificira kakršenkoli drug na service odvisen unit.  
+
+Unit fajli so poimenovani s končnicami, glede na to kaj predstavljajo (.service, .timer...). Nahajajo se v:
+/usr/lib/systemd/system - privzeta lokacija, kamor package postavi svoj unit file med inštalacijo. Na nekaterih sistemih je ta pot: /lib/systemd/system. Vsebina teh map se upošteva kot stock, zato se ne bi smela urejati.
+/etc/systemd/system - lokalni unit fajli in urejanje. Tu se fajli lahko dodajajo.
+/run/systemd/system - začasni unit fajli
+
+Systemd gleda vse omenjene mape, zato so praktično ekvivalentne. V primeru, da obstaja konflikt, ima mapa z /etc/ najvišjo prioriteto.
+
+Primer mojega radio.service v /etc/systemd/system:
+[Unit]
+Description=Description for sample script goes here
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/root/radio/timeoutcontrol/start_radio_with_tcpdump_check.sh
+TimeoutStartSec=0 
+
+[Install]
+WantedBy=default.target
+
+SYSTEMCTL - komanda za pregled statusa systemd in izvajanje sprememb konfiguracije. Če vpišemo komando "systemctl" brez kakršnihkoli argumentov, dobimo spisek vseh loaded in aktivnih service, sockets, targets, mounts in devices.
+
+LIST ALL LOADED AND ACTIVE SERVICES
+systemctl --type=service
+
+List all installed unit files regardless if they are active or not:
+systemctl list-unitfiles --type=service
+
+SINGLE USER MODE - ali rescue mode. Uporabimo, ko ima sistem težave. Pri sistemih s systemd je tak način znan kot rescue.target. Naloži se minimalni nabor procesov, daemonov in servicov. Network se v temu načinu ne naloži. Včasih se naloži samo root particija, zato je za zagon programov, ki se nahajajo izven /bin, /sbin, /etc potrebno mountati ostale file systeme. V precej sistemih se mounta root filesystem kot read only, zato je nemogoče urejati pomembne konfiguracijske fajle. Zato je root (/) potrebno remountati v read/write načinu.
+systemctl rescue - V CentOS 7 pridem v single user (oziroma iz lastnih izkušenj rebootaš sistem, in izbereš "kernel boot", kjer mu preprosto dodaš parameter single. Se pravi, samo presledek in nato single.
+mount -o rw,remount / - mounta root v read write načinu
+fdisk -l - pregled sistemskih particij
+
+Single user mode v RHEL in CentOS - je nekoliko agresivnejši kot normalno. Mounta vse lokalne filesysteme. To je drugače OK, ampak v primeru okvarjenega filesystema je v kernel argument iz bootloaderja (GRUB) potrebno dodati:
+systemd.unit=emergency.target - ne naloži lokalnih filesystemov. 
+V normal boot se fsck sam požene. V single mode ga bo odvisno od našega tipa filesystema potrebno zagnati ročno.
+
+
+MOUNT
+"mount" pripne nek filesystem v določen direktorij na disku (mount point). Če zaženemo komando "mount" brez argumentov, vidimo vse filesysteme, ki so mountani. Večino je mountanih s strani kernela. 
+
+Primer mountanja particije sda4 v direktorij /users:
+sudo mount /dev/sda4 /users
+
+/etc/fstab prikazuje filesysteme, ki so mountani ob zagonu. Po defaultu so notri samo /, /boot in swap.
+
+"umount" unmounta želen filesystem. Obstaja argument -f, ki forca umount, ampak namesto tega se raje uporablja "fuser -c /user" (/user je mountpoint), ki izpiše vse PID od procesov, ki uporabljajo file ali direktorij na tem filesystemu.
+
+
+FILE TYPES:
+-Regular files - (-)
+-Directories - (d)
+-Character device files - (c)
+-Block device files - (b)
+-Local domain sockets - (s)
+-Named pipes (FIFOs) - (p)
+-Symbolic links - (l)
+
+Primer komande za ugotovitev vrste fajla: 
+# file /root/radio/ORF_Radio_Steiermark.sh
+ORF_Radio_Steiermark.sh: Bourne-Again shell script, UTF-8 Unicode text executable
+
+Links:
+ln oldfile newfile
+ln -s oldfile newfile - to uporabljaj za direktorije
+
+
+Character and block device files:
+Device files programom omogočajo komunikacijo s hardware in periferijo. Ko filesystem dobi zahtevo, ki se navezuje na character, ali block device file, preda to zahtevo naprej k ustreznemu driverju naprave. Driverji s kernelom komunicirajo preko standard communicaton interface. Tudi driver se predstavlja kot regular file. Character in block device fajli so samo rendezvous točka z driver fajli.
+
+
+Local domain sockets:
+Sockets so povezave med procesi, preko katerih komunicirajo. Local domain sockets so dostopni samo localhostu.
+
+Named pipes:
+Tako kot local domain sockets, tudi named pipes omogočajo komunikacijo med procesi na istem hostu. Znani tudi kot FIFO files.
+
+PERMISSIONS
+Vsak file ima tako lastnika kot grupo (owner, group). Owner lahko nastavlja permissione fajla. Owner je samo eden, vendar je lahko več uporabnikov group owner. Owner nastavi, kaj lahko group ownerji naredijo s fajlom. Tako kernel kot filesystem sledita ownerjem in groupam z njihovimi UID in GID in ne s tekstovnim imenom.
+
+/etc/passwd - Tu so uporabniki sistema. Korelacija med UID in uporabniškim imenom.
+/etc/group - Tu so definirana imena grup in korelacija med GID. Danes so grupe shranjene v network database, kot je LDAP. 
+
+Execute permission:
+V linuxu obstajata dve vrsti execute. Executanje binaryies, katere CPU požene direktno in executanje skript, ki morajo biti interpretane s strani shella ali kakšnega drugega programa (#!/usr/bin/perl). 
+
+Biti setuid in setgid:
+Biti z oktalnimi vrednostmi 4000 in 2000 so setuid in setgid biti. 
+Ko so nastavljeni na executable fajlih, omogočajo programom da dostopajo do fajlov in procesov, ki bi bili drugače nedostopni uporabniku, ki jih poganja. 
+V primeru ko je setgid nastavljen na direktorij, bodo nato novo kreirani fajli znotraj direktorija prevzeli group ownership od direktorija in ne default grupe.  
+
+Primer: 
+ls -l /bin/passwd
+-rwsr-xr-x. 1 root root 27768 Feb 11  2017 /bin/passwd
+
+-Tu vidimo oznako "s", kjer bi moral biti "x".
+Da setuid in setgid delujeta, mora execute bit biti nastavljen za ownerja, group ownerja. V primeru da execute bit ni nastavljen, je oznaka na execute bit mestu veliki S.
+setuid nima na direktorij nobenega efekta.
+-Številka 1 pomeni, število hard linkov, ki jih ta fajl ima. Symbolic linki na to številko ne vplivajo. Vsi direktoriji imajo vsaj 2 hard linka. Link iz parent direktorija in link iz posebnega fajla imenovanega . znotraj samega direktorija.
+-root je ime ownerja. Prav tako se group owner imenuje root. Filesystem pozna ID številke teh in ne tekstovnih imen. Če "ls" prikaže ID številko namesto tekstovnega imena pomeni, da je bil user ali grupa izbrisana iz /etc/passwd ali /etc/group fajla. Lahko pa pomeni težave z LDAP bazo, če se uporablja.
+
+CHMOD
+Pravice s chmod nastavljamo bodisi z oktalno notacijo, ali z mnemonic sintakso.
+Primer oktalne notacije: chmod 755 testfile
+Primer mnemonic sintakse: chmod u+x
+u - user(owner)
+g - grupa
+o - other
+u+x - doda execute pravice ownerju k že obstoječim pravicam.
+u-x - odvzame execute pravice ownerju.
+u=x - dodeli le execute pravice ownerju.
+
+Mnemonic sintaksa je še posebej uporabna v navezi z -R, saj ohrani bite, katerih vrednosti nismo eksplicitno dodelili.
+Primer: chmod -R g+w mydir - doda write pravice mydir direktoriju in njegovi vsebini, ne da bi pri tem spremenili pravice execute bitu.
+!!Če želimo spreminjati execute bit, je pri uporabi -R potrebno biti zelo pazljiv. Tako npr. chmod -R a-x odstrani execute pravice med drugim tudi za direktorij. Tega verjetno ne želimo. Alternativa temu bi bila:
+find mydir -type f -exec chmod a-x {} ';'
+
+
+PACKAGE MANAGEMENT
+RedHat/CentOS/SUSE - RPM 
+Install, uninstall, query packages - rpm
+Find, download, upgrade package from the internet and analyze interpackage dependencies - yum
+rpm -i (install)
+rpm -U (upgrade)
+prm -e (erase)
+rpm -q (query - dati moraš še en flag, nrp. -qa zlista vse nameščene pakete na sistemu.)
+
+Pri recimo updatanju kakšnega package, se pogosto dogaja, da so na želeni package dependency nekaterih drugih packageov. Dependencije za recimo openssh preverimo z:
+rmp -q --whatrequires openssh
+
+Ko dobimo spisek dependant paketov, pridobimo njihove updatane pakete. Ni potrebno posodobiti vsakega posebej. rpm je dovolj pameten, da inštalira več paketov naenkrat in jih poinštalira po dependencijih.
+sudo rpm -U openssh-*
+
+Debian/Ubuntu - .deb  
+Install, uninstall, query packages - dpgk
+Find, download, upgrade package from the internet and analyze interpackage dependencies - APT
+dpkg --install
+dpkg --remove
+dpkg -l (zlista nameščene pakete. Uporabno v kombinaciji z grep)
+
+
+USER MANAGEMENT
+/etc/passwd lahko hitro urejamo s komando "vipw". Vsak user v /etc/passwd ima 7 polj ločenih z dvopičjem:
+-Login name
+-Encrypted password placeholder (to je deprecated. Kriptirani passwordi so zdaj shranjeni v /etc/shadow)
+-UID
+-Default GID
+-Optional "GECOS" polje (ime, telefon, pisarna...)
+-Home direktorij
+-Login Shell
+
+Če so uporabniki deljeni preko direktorija, recimo LDAP, imajo lahko uporabniki v /etc/passwd predznak + ali -. Ti predznaki povejo sistemu, kako naj integrira podatke iz direktorija. 
+Direktorij integracija se lahko nastavi tudi v /etc/nsswitch.conf.
+
+Privzeti password policy se v CentOS/Red Hat in starejših Linux nastavlja v /etc/login.defs. V novih sistemih se to nastavlja v /etc/pam.d/common-passwd.
+
+V CentOS/Red Hat lahko nastavimo password algoritem tudi preko komande:
+authconfig --passalgo=sha512 --update
+
+Stari passwordi uporabnikov ohranijo stari algoritem. Uporabniki morajo ročno posodobiti svoje passworde, da pride novi algoritem v poštev. Komanda za onemogočanje starih passwordov in prisilna posodobitev passwordov je:
+chage -d 0 username
+
+Če ročno dodajaš uporabnika preko /etc/passwd, vedno dodaj x v polje, kjer bi moral biti encrypted password. To prepreči nedovoljen vstop, dokler uporabnik ne nastavi svojega passworda.
+
+Kriptirani passwordi imajo konstantno dolžino (86 znakov za SHA-512, 34 znakov za MD5, 13 znakov za DES) ne glede na dolžino passworda. Tudi, če imata uporabnika enak password, njun kriptiran password ne bo enak.
+V fajlu /etc/shadow se kripirani passwordi začnejo različno, glede na metodo kriptiranja:
+MD5 - $1$ ali $md5$
+Blowfish - $2$
+SHA-256 - $5$
+SHA-512 - $6$
+
+/etc/shadow file lahko hitro urejamo s komando "vipw -s". Prebere ga lahko samo superuser. Poleg usernamov in passwordov, ki so edina nujna izpolnjena polja, je notri še nekaj dodatnih podatkov o uporabniku, ki niso dodeljeni v /etc/passwd. V primeru, da ročno vnašaš userje, je pomembno, da urejaš tako /etc/passwd kot tudi /etc/shadow file. Orodje "useradd" namesto nas ureja oba fajla hkrati. Orodje "pwconv" med seboj uskladi fajla /etc/passwd in /etc/shadow.
+/etc/shadow file vsebuje 9 polj za vsakega uporabnika:
+-Login name (to polje userja iz /etc/passwd z userjem iz /etc/shadow)
+-Encrypted password (koncept kriptiranega passworda je isti kot v /etc/passwd, le da je shadow file mogoče brati samo kot superuser)
+-Date of last password change (komanda passwd izpolne ta podatek sama)
+-Minimum number of days between password changes (Prepreči, da bi uporabnik nastavil enako geslo, kot ga je že imel. Zaradi morebitnih vdorov pa je bolje, da je to polje nastavljeno na 0)
+-Maximum number of days between password changes (Poskrbi, da se uporabniški password izteče) 
+-Number of days in advance to warn users about password expiration (Ob loginu sporočilo, da se password izteka)
+-Days after password expiration that account is disabled 
+-Account expiration date (Datum v dnevih od 1.1.1970, ko se account izteče. Uporabnik se ne more prijaviti, dokler administrator ne spremeni vrednosti polja. Če je polje prazno, se account nikoli ne izteče. Namesto tega, lahko uporabimo komando "usermod", kjer nastavimo datum izteka accounta v formatu yyyy-mm-dd.
+-A field reserved for future use which is currently always empty
+
+Absolutne vrednosti datumov v /etc/shadow so določene glede na to, koliko dni je preteklo od 1.1.1970. Da dobimo dneve, moramo komando za sekunde pretvoriti v dni, z:
+expr `date+%s` / 86400.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

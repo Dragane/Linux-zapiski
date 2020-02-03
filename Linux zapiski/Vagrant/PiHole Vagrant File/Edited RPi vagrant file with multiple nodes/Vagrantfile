@@ -1,0 +1,36 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config| 
+	config.vm.define "rpinode1" do |subconfig|	
+		subconfig.vm.box = "ubuntu/xenial64"
+		subconfig.vm.provision :shell, :inline => "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config; sudo systemctl restart sshd;", run: "always" 
+		subconfig.vm.network "public_network", ip: "192.168.10.200"
+		subconfig.vm.hostname = "rpinode1"
+		subconfig.vm.provider "virtualbox" do |vb|
+			vb.name = "rpinode1"
+			vb.customize ["modifyvm", :id, "--cpus", "1"]
+			vb.customize ["modifyvm", :id, "--memory", "1024"]
+			vb.customize ["modifyvm", :id, "--usb", "off"]
+			vb.customize ["modifyvm", :id, "--usbehci", "off"]
+			vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+		end
+	end
+end
+
+Vagrant.configure("2") do |config| 
+	config.vm.define "rpinode2" do |subconfig|	
+		subconfig.vm.box = "ubuntu/xenial64"
+		subconfig.vm.provision :shell, :inline => "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config; sudo systemctl restart sshd;", run: "always" 
+		subconfig.vm.network "public_network", ip: "192.168.10.201"
+		subconfig.vm.hostname = "rpinode2"
+		subconfig.vm.provider "virtualbox" do |vb|
+			vb.name = "rpinode2"
+			vb.customize ["modifyvm", :id, "--cpus", "1"]
+			vb.customize ["modifyvm", :id, "--memory", "1024"]
+			vb.customize ["modifyvm", :id, "--usb", "off"]
+			vb.customize ["modifyvm", :id, "--usbehci", "off"]
+			vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+		end
+	end
+end

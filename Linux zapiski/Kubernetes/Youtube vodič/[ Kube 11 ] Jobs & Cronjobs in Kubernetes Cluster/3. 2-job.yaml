@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: helloworld
+spec:
+  template:
+    spec:
+      completions: 2
+      containers:
+      - name: busybox
+        image: busybox
+        command: ["sleep", "60"] # spremenimo, da se bo sleep izvajal 60 sekund, kar pomeni, da se bo job izvajal 60s.
+      restartPolicy: Never

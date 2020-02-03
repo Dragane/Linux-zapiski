@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment # Kind imamo nginx deployment z eno repliko.
+metadata:
+  labels:
+    run: nginx
+  name: nginx-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: nginx
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      volumes:
+      - name: www # dodelimo ime voluma, ki ga bpmo mountali.
+        persistentVolumeClaim:
+          claimName: pvc-nfs-pv1 # Tu je ime PersistenvVolumeClaima, ki smo ga prej kreirali.
+      containers:
+      - image: nginx # kateri container.
+        name: nginx # ime containerja.
+        volumeMounts:
+        - name: www # Ime voluma naj bo enako, kot smo ga specificirali v POD specificationu zgoraj.
+          mountPath: /usr/share/nginx/html # V containerju ga bomo mountali pod to lokacijo.

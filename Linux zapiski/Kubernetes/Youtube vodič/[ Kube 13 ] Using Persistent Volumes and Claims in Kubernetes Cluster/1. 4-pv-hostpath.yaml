@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolume # kind je persistent volume
+metadata:
+  name: pv-hostpath # ime voluma
+  labels:
+    type: local # tip bo local, karkoli že to pomeni.
+spec:
+  storageClassName: manual # manual storage class
+  capacity:
+    storage: 1Gi # 1gb velikost
+  accessModes:
+    - ReadWriteOnce # logično, RWO
+  hostPath: # kot v vodiču specificirano bomo pogledali tip voluma hostPath, ki je preprost za kreiranje, vendar ima neke omejitve. Hostpath je namreč neka mapa v enem izmed naših nodov.
+    path: "/kube"

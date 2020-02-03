@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kubernetes.io/change-cause: "Updated to latest version." # Dodamo novo vrstico, kjer damo annotation že kar v yaml fajl.
+  labels:
+    run: nginx
+  name: nginx-deploy
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      run: nginx
+  strategy: # Za rolling update smo dodali cel "Strategy" element, minReadySeconds in revisionHistoryLimit.
+    type: Recreate 
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      containers:
+      - image: nginx:1.14 # To vrednost bomo spreminjali
+        name: nginx

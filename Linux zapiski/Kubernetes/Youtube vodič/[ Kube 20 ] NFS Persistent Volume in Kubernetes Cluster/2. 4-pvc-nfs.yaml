@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim # Kind je PVC
+metadata:
+  name: pvc-nfs-pv1 # Ime PVCja
+spec:
+  storageClassName: manual # To mora biti manual. "Zahtevamo storage iz storageclasssa manual." Mora se ujemati, kar smo dali v PV.
+  accessModes:
+    - ReadWriteMany # Enako kot v PV. Mora namreč obstajati PV, ki odobri te zahteve.
+  resources:
+    requests:
+      storage: 500Mi # Zahtevamo 500MB, čeprav je naš PV 1GB. 

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: quota-demo-ns
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources: 
+     limits:
+       memory: "200Mi" #Specificiramo 200MB RAMa na ta POD.
+     requests:
+       memory: "50Mi" # Zdaj smo navedli request memory poda, ki bo 50MB, kar je manj, kot je omejitev v limit rangu.

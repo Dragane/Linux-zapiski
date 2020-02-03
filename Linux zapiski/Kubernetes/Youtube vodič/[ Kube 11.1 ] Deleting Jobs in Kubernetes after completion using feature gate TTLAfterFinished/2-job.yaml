@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: helloworld
+spec:
+  ttlSecondsAfterFinished: 20 # dodamo še ttl controller specification, ki smo ga dobili na uradni strani kubernetesa.
+  template:
+    spec:
+      containers:
+      - name: busybox
+        image: busybox
+        command: ["echo", "Hello Kubernetes!!!"] 
+      restartPolicy: Never

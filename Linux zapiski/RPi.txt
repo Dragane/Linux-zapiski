@@ -1,0 +1,73 @@
+﻿spremembe
+Samba in system userji so ločeni. Za sync sem namestil sudo apt-get install libpam-smbpass
+Odkomentiran part:  security = user, v želji da bi RPi zahteval password do shared media folderja. Še vedno ga ne. sudo nano /etc/samba/smb.conf
+
+XRDP WRONG KEYMAP:
+Keymap .ini se nahaja v /etc/xrdp/. Po defaultu slovenskega .ini ni v mapi. Imenovati bi se moral km-0424.ini. Informacija o imenu dobljena na http://xrdp.sourceforge.net/documents/keymap/rfc1766.html. File dobljen na http://www.mail-archive.com/xrdp-devel@lists.sourceforge.net/msg00602.html. Fajl najprej skopiraš v mapo /etc/xrdp in nato:
+ sudo chown xrdp.xrdp /etc/xrdp/km-0424.ini
+sudo chmod 644 /etc/xrdp/km-0424.ini
+sudo service xrdp restart
+
+Po tem postopku je keyboard layout slovenski ampak nastane nov problem. Ne delajo puščice, altgr, page up / down etc. Zato je iz originalnega km-0409.ini potrebno prekopirati vrednosti za tipke ki zajebavajo. V .ini imaš na levi najprej keycode (koda tipke) in na desni kaj se izvede (koda izvedbe). Da dobimo keycode tipke, ki jo želimo poraviti, je potrebno pognati program "xev". Pognati ga ne smemo znotraj xrdp seje ampak bodisi lokalno ali pa v mojem primeru preko puttyja in xminga. V terminalu se izpiše keycode pritisnjene tipke in potem iz originalnega .ini za ta keycode prenesemo vrednost v km-0424.ini. Najbolje deluje nano v puttyju. 
+
+--------------------
+Inštalacija LAMP
+
+sudo apt-get install apache2 (dodatno: apache2-doc apache2-utils)
+sudo apt-get install mysql-server (dodatno: mysql-client)
+sudo apt-get install php5 (dodatno: libapache2-mod-php5 php-pear php5-xcache)
+sudo apt-get install php5-mysql
+
+Opcijski phpmyadmin:
+sudo apt-get install phpmyadmin
+Izbereš apache2 server
+Izbereš Yes
+Vpišeš root password, ki je bil nastavljen pri inštalaciji mysql serverja
+Nastaviš phpmySQL password (dal sem enakega kot tistega od mysql server)
+sudo nano /etc/apache2/apache2.conf
+Na koncu tega fajla daš: 
+Include /etc/phpmyadmin/apache.conf
+In še restart apacheja:
+/etc/init.d/apache2 restart
+--------------------------------
+Make RPi backup: 
+sudo dd if=/dev/sdb of=~/RPi_Backup/6.8.2014_RPi_Raspbian.img bs=4M
+
+Restore RPi backup or install fresh OS:
+sudo dd bs=4M if=~/imgfajl.img of=/dev/sdb
+
+-----------------------
+Inštalacija Sqlite3
+
+sudo apt-get install sqlite3
+--------------------------------------
+inštalacija lftp, za namene učenja basha
+
+sudo apt-get install lftp
+--------------------------------------
+inštalacija pip (programček za namestitev python modulov). Nujno najprej "sudo su".
+
+sudo su
+apt-get install python-setuptools && easy_install pip
+-----------------------------------------------------------------------------------
+Nameščen iperf za testiranje mrežne hitrosti (v kombinaciji z windows jperf serverjem)
+
+sudo apt-get install iperf
+-----------------------------------------------------------------------------------------
+Set permissions on the web directory /var/www/
+
+It is useful to change the permissions on the www directory to allow your user to update the webpages without needing to be root.
+
+Change the directory owner and group
+sudo chown www-data:www-data /var/www
+allow the group to write to the directory
+sudo chmod 775 /var/www
+Add the pi user to the www-data group
+sudo usermod -a -G www-data pi
+
+You should logout and back in - to pick up group permissions, or if running X you can just start a new terminal.
+
+
+
+
+

@@ -1,0 +1,21 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/xenial64"
+  config.vm.hostname = "pihole"
+  config.vm.provider "virtualbox" do |vb|
+    vb.name = "pihole"
+    vb.customize ["modifyvm", :id, "--cpus", "1"]
+    vb.customize ["modifyvm", :id, "--memory", "1024"]
+    vb.customize ["modifyvm", :id, "--usb", "off"]
+    vb.customize ["modifyvm", :id, "--usbehci", "off"]
+    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+  end
+
+  # Disablamo COM port. Drugače je dajalo error ob bootanju virtualke.
+  config.vm.network "public_network", ip: "192.168.10.200"
+
+  # Omogočimo prijavo z username in password, namesto samo s keyem.
+  config.vm.provision :shell, :inline => "sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config; sudo systemctl restart sshd;", run: "always" 
+end

@@ -1,0 +1,19 @@
+apiVersion: apps/v1 # to rabimo dodati na začetku.
+kind: ReplicaSet # Deployamo replicaset resource. Torej vrsta objekta je ReplicaSet.
+metadata:
+  labels: # Dodamo mu label imenovan "run" in vrednost naj ima "nginx". Vsi podi narejeni s tem replicasetom bodo imeli dodan ta label na njih.
+    run: nginx
+  name: nginx-replicaset # Ime replica seta.
+spec:
+  replicas: 2 # Želimo dve instanci nginx. Skratka dva poda.
+  selector: # Label od prej doda vsakemu podu label. Ta replicaset naj upravlja z vsemi podi, ki imajo label "run: nginx".
+    matchLabels:
+      run: nginx
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx

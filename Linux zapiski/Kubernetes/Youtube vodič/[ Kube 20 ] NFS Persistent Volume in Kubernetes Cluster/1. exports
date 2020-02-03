@@ -1,0 +1,1 @@
+/srv/nfs/kube	*(rw,sync,no_subtree_check,insecure) # tu specificiramo, za kateri IP bo ta disk dostopen. Zvezdica pomeni, da je dostopen, od vsakega IPja. To je za test tako.

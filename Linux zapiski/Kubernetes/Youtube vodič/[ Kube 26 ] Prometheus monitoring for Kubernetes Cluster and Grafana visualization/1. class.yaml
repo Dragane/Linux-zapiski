@@ -1,0 +1,9 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass # tip resursa je storageclass
+metadata:
+  name: managed-nfs-storage # ime storageclassa. Vsakič ko delamo PVC moramo referirati na ta storageclass. Druače se persistent volume ne bo provisioniral.
+  annotations: 
+    storageclass.kubernetes.io/is-default-class: "true" # Nastavimo naš storaeclass kot default. Komando smo dobili na Kubernetesovi strani defaultstorageclass. 
+provisioner: example.com/nfs # to je samo ime provisionerja
+parameters:
+  archiveOnDelete: "false"

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim # kind je itak PVC
+metadata:
+  name: pvc-hostpath # ime PV claima
+spec:
+  storageClassName: manual # mora se ujemati s StorageClassName of PV, ki smo ga prej ustvarili.
+  accessModes:
+    - ReadWriteOnce # tudi to se mora ujemati s PV.
+  resources:
+    requests:
+      storage: 100Mi # Rabim PV, ki ima vsaj 100MB free space.

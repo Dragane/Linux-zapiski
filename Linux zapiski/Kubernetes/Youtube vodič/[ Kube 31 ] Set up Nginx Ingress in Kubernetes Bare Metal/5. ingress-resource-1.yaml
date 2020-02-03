@@ -1,0 +1,12 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-resource-1 # pač ime resourca.
+spec:
+  rules:
+  - host: nginx.example.com # če pride request za nginx.example.com, potem usmeri zahtevo na spodnji backend.
+    http:
+      paths:
+      - backend:
+          serviceName: nginx-deploy-main # V tem backendu je definirano ime servica, na katerega usmerimo zahtevo.
+          servicePort: 80

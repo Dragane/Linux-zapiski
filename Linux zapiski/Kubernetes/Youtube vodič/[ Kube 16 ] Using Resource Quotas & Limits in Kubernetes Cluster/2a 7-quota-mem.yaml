@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: quota-demo-mem # Ime naše quote.
+  namespace: quota-demo-ns # Ta quota bo veljala v tem namespacu.
+spec:
+  hard:
+    limits.memory: "500Mi" # limit bo na memoryju. 500 MB. Ta celoten namespace ne bo smel preseči 500MB.

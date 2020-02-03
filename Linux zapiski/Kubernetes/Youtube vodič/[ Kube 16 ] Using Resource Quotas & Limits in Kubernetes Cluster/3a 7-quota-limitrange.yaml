@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: LimitRange # kind je tu limit range
+metadata:
+  name: mem-limitrange  # ime limit ranga
+  namespace: quota-demo-ns # ta limit range pripada temu namespacu.
+spec:
+  limits:
+  - default:
+      memory: 300Mi # Default memory naj bo 300MB.
+    defaultRequest:
+      memory: 50Mi # ?? Default request naj bo 50MB.
+    type: Container

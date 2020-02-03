@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: nginx
+  name: nginx-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: nginx
+  template:
+    metadata:
+      labels:
+        run: nginx
+
+    spec:
+
+      volumes:
+      - name: shared-volume # ime našega shared voluma
+        emptyDir: {} # tip voluma. To bo razloženo v volume related videu.
+
+      initContainers: # init container bo busybox.
+      - name: busybox
+        image: busybox
+        volumeMounts: # mountamo volume
+        - name: shared-volume # volume z imenom, ki smo ga zgoraj definirali.
+          mountPath: /nginx-data # kam mountamo naš volume znotraj containerja.
+        command: ["/bin/sh"]
+        args: ["-c", "echo '<h1>Hello Kubernetes</h1>' > /nginx-data/index.html"] # znotraj našega mountanega voluma kreiramo index.html.
+
+      containers:
+      - image: nginx
+        name: nginx
+        volumeMounts: # mountamo volume.
+        - name: shared-volume # z zgoraj definiranim imenom.
+          mountPath: /usr/share/nginx/html # Mountan naj bo direktno v folder, kejr nginx prikazuje web fajle. (default nginx documentroot).

@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment # Tip naj bo Deployment.
+metadata:
+  labels:
+    run: nginx # Vsi podi v tem deploymentu naj imajo label "run" z vrednostjo "nginx".
+  name: nginx-deploy # Ime tega deploymenta.
+spec:
+  replicas: 5 # Želimo 5 replik.
+  selector: # Selector izbere vse pode z lablom run: nginx
+    matchLabels:
+      run: nginx
+  template:
+    metadata:
+      labels:
+        run: nginx
+    spec:
+      containers:
+      - image: nginx
+        name: nginx
+     # nodeSelector:
+     #   usbdrive: "true"

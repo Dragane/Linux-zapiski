@@ -1,0 +1,35 @@
+kind: Deployment # resource bo deployment.
+apiVersion: apps/v1
+metadata:
+  name: nfs-client-provisioner # ime deploymenta. 
+spec:
+  replicas: 1 # imel bo eno repliko.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: nfs-client-provisioner
+  template:
+    metadata:
+      labels:
+        app: nfs-client-provisioner
+    spec:
+      serviceAccountName: nfs-client-provisioner # uporabimo serviceaccount, ki smo ga prej kreirali.
+      containers:
+        - name: nfs-client-provisioner
+          image: quay.io/external_storage/nfs-client-provisioner:latest # tu dobimo image za ta pod.
+          volumeMounts:
+            - name: nfs-client-root # Na kateri volume referiramo. Za kateri volume gre.
+              mountPath: /persistentvolumes # tu mountamo volume.
+          env:
+            - name: PROVISIONER_NAME 
+              value: example.com/nfs
+            - name: NFS_SERVER
+              value: 192.168.10.199 # tu damo IP adreso NFS Serverja. 
+            - name: NFS_PATH
+              value: /srv/nfs/kubedata # To je shared folder na NFS serverju. Mount Section se mu reče v linux.
+      volumes:
+        - name: nfs-client-root # Še enkrat vpišemo ime voluma, na katerega se vežemo.
+          nfs:
+            server: 192.168.10.199 # Še enkrat izpolnimo IP adreso.
+            path: /srv/nfs/kubedata

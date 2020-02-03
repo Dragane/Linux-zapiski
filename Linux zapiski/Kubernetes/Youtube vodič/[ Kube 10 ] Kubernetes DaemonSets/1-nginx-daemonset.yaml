@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: DaemonSet # Vidimo da je zdaj resource type definiran kot DaemonSet.
+metadata:
+  name: nginx-daemonset # ime daemonseta
+spec:
+  selector:
+    matchLabels:
+      demotype: nginx-daemonset-demo # vse pode, ki jih bo kreiral, bo grupiral pod tem imenom (lablom).
+  template:
+    metadata:
+      labels:
+        demotype: nginx-daemonset-demo # vse pode ki jih bo kreiral, jim bo dodelil label.
+    spec:
+      containers:
+      - image: nginx
+        name: nginx

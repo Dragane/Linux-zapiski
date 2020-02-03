@@ -1,0 +1,66 @@
+SLIDE 2
+Cluster je poglavitni element kubernetesa. Sestavljen je iz node-ov. Vsak node je posamezen virtualni, ali fizični host.
+Vsak cluster je sestavljen iz več worker node-ov (ki deployajo, run in manage containerske aplikacije) ter en master node, ki upravlja in nadzira worker node. Ni se potrebno povezovati na noben node, da cluster nadziramo. Cluster namreč nadziramo s komando kubectl, ki je aplikacija lahko nameščena na neki naši host mašini. Da pa jo lahko uporabljamo, pa moramo iz masternoda skopirati config file v naš ~/.kube folder in inštalirati samo aplikacijo kubectl. V config fajlu je zapisan IP master noda ter  certifikat.
+
+
+SLIDE 2 in 3
+Master node
+Poganja scheduler service, ki avtomatizira kdaj in kam se containerji deployajo, glede na zahteve developerja in resursov. 
+Mora imeti minimalno 2GB RAM.
+Lahko je tudi sam host podov in jih bo mnogokrat dal na sebe, če bo močnejši kot workernode. V mojem primeru je to precej pogosto, saj je raspberry pi 4 precej močnejši od trojke. Verjetno se to da izklopiti, vendar bom za namene te vaje to pustil vklopljeno. Obstajajo tudi načini, da določen pod deployaš na točno določen node, ali na skupino nodov, ki si jim dodal label.
+
+Worker node
+Vsak worker node vsebuje tool, ki se uporablja za managiranje kontainerjev (npr. Docker) in agenta z imenom Kubelet, ki sprejema in executa ukaze iz master noda.
+
+
+1. Join node v cluster.
+cat /var/lib/rancher/k3s/server/node-token ; na k3s masternodu izpišemo token.
+k3s agent --server https://192.168.1.5:6443 --token K1046abb24216589474df82475ffd46b2e41e740cb76b4db4d6a7def4b2fc5f20ba::server:c82ffb6208cc1f6171c45a92c4f38530 ; na workernodu vpišemo to komando, s parametri, ki pripadajo masternodu. 
+Ko node joinaš, se podatki o resursih workernoda sinhronizirajo z masternodom. Glede na te resurse nato scheduler ve, kam bo deployal določene pode. 
+
+
+SLIDE 4
+kubectl cluster-info ; prva komanda
+kubectl get nodes ; druga komanda
+kubectl describe node masternode ; pregledaš info masternoda. Preveri še workernode. Poglej resurse.
+V eno okno vpiši "watch kubectl get all -o wide --show-labels".
+
+
+SLIDE 5
+Trije najpogostejši objekti v Kubernetesu:
+POD:
+Pod je najmanjša enota, ki jo lahko deployamo. Je building block kubernetesa. Če recimo želimo poganjati nginx container, bomo dejansko poganjali pod. Pod pa ni ekvivalenten containerju. Pod enkapsulira vso konfiguracijo potrebno za poganjanje določene aplikacije. Podi definirajo containerje, ki jih želimo poganjati in storage resurse, ki jih potrebujemo. 
+So dober način, kako logično grupiramo več containerjev v skupni deployment. Vsak container, ki je registriran na pod, bo deployan na isti kubernetes node. Sharajo enak linux kernel in enak namespace. Dva containerja, ki tečeta v istem podu, si bosta torej sharala network, storage in cpu resurse. Vsi containerji v podu so exposani na en unikatni IP dostopen znotraj kubernetes clusterja.
+Podi so grupa containerjev, ki si delijo enake storage resurse in enak network. Omogočajo scalability v Kubernetesu: Če ima določen container v podu več prometa, bo Kubernetes repliciral pod po ostalih  nodih v clusterju. Zato je dobra praksa, da so podi kompaktni, tako da vsebujejo containerje, ki si delijo resurse. Ponavadi imamo 1 pod za 1 container.
+
+SLIDE 6
+Prikaži deploy poda (nginx). ; 1-nginx-pod.yaml
+Prikaži port forwarding - obe metodi.
+a) kubectl port-forward nginx 8080:80 ; kasneje pri replicasetu pokaži port forward z nodeportom.
+
+
+SLIDE 7
+REPLICA SET:
+Ker ni ravno veliko aplikacij ki bi tekle na eni instance, je Kubernetes ustvaril Replica Set. Ta nam omogoča poganjanje večih instanc enega poda. Replica Setu lahko povemo, koliko instanc želimo poganjati in replica set nam bo to zagotovil. Tudi ko en pod crashira, bo replica set ustvaril novega. Replica Set upravlja z nodi glede na njihov label. 
+
+Razloži replicaset yaml file in ga deployaj.
+Poglej lable s: kubectl get all -o wide --show-labels
+Izbriši enega izmed podov in poglej, kako se takoj na novo en kreira: kubectl delete pod nginx-rewgr
+Spremeni število podov v repliki: kubectl scale replicaset nginx-replicaset --replicas 10
+Odstrani label "run" iz enega poda in poglej, kaj se zgodi. Labla ne vidimo več, je pa replicaset takoj ustvaril nov pod s tem lablom. ; kubectl label pod nginx-replicaset-fs2dl run-
+Dodaj nodeport port forwarding: kubectl expose replicaset nginx-replicaset --type NodePort --port 80 ; Kubernetes poljubno izbere, na kateri port je forwardal. 
+Poglej service ki si ga kreiral in pokaži vrstico NodePort ter Endpoints, kjer so navedeni vsi podi: kubectl describe service nginx-replicaset
+Poveži se na masternode ali workernode preko browserja in poglej ta service.
+
+SLIDE 8 in 9
+DEPLOYMENT
+Deployment je uporaben zato, ker ko želimo izvesti neki update, nam to lahko pojebe našo aplikacijo. Deployment poskrbi za postopen update. Recimo poskrbi, da je v vsakem danem trenutku dostopnih vsaj 25% podov. Deployment v sebi že avtomatsko vsebuje replicaset. Zato nam replicaset ni potrebno kreirati.
+
+SLIDE 10
+Kubernetes Dashboard
+	kubectl get all -n kubernetes-dashboard
+	kubectl -n kube-system get sa ; pogledamo našega novea userja v kube-system namespacu. Ime ima dashboard-admin. 
+	kubectl -n kube-system describe sa dashboard-admin ; Pogledamo njegov token (dashboard-admin-token-8jdwj).
+	kubectl -n kube-system describe secret dashboard-admin-token-8jdwj ; Izpiše se nam token, ki ga pastamo v dashboard za login.
+
+

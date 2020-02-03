@@ -1,0 +1,36 @@
+https://manski.net/2016/09/vagrant-multi-machine-tutorial/ ; Kreacija Vagrant fajla in multiple machines.
+
+vagrant up; postavi virtualke iz vagrant fajla.
+vagrant destroy; izbriše virtualke iz vagrant fajla.
+vagrant ssh; poveže se na ssh virtualke iz vagrant fajla.
+vagrant reload; ponovno provisionira virtualko iz vagrantfajla, z novimi spremembami.
+vagrant halt; gracefully ugasne mašino.
+vagrant status; dobiš info o virtualki, če teče ali ne.
+vagrant snapshot save default Clean-PiHole; shrani snapshot virtualke imenovane default, kot Clean-PiHole.
+vagrant package --output mynew.box; iz obstoječe virtualke naredi Vagrant box.
+
+Če ti vagrant komanda spreminja terminal window font, je to bug. Spremeni pisavo v lucida consolas in ne bo več tega problema.
+
+
+
+
+
+-Vagrant virtualke z enim masterjem in dvema workerjema. Git od vodiča: git clone https://github.com/justmeandopensource/kubernetes
+	https://www.vagrantup.com/docs/other/wsl.html; navodila kako laufati vagrant znotraj windows ubuntuja, medtem imaš virtualbox inštaliran na windowsu. Vagrant mora biti inštaliran na ubuntuju.
+	
+	-Vagrant dovoljenje za "Vagrant SSH" pravice. Da se te pravice zapomni, lahko to komando skopiraš v ~/.bashrc file. Da globalno to dovoliš, skorpiraj v /etc/bash.bashrc.
+	export VAGRANT_WSL_WINDOWS_ACCESS_USER_HOME_PATH="/mnt/c/Stuff/Vagrant_Git_Skripta_justmeandopensource/kubernetes/vagrant-provisioning"
+	
+	VAGRANT Errorji znotraj Ubuntu sistema (ko so vagrant virtualke bile že prej provisionirane preko windowsa:
+	1. The VirtualBox VM was created with a user that doesn't match the
+	current user running Vagrant. VirtualBox requires that the same user
+	be used to manage the VM that was created. Please re-run Vagrant with
+	that user. This is not a Vagrant issue.
+
+	The UID used to create the VM was: 0
+	Your UID is: 1000
+	SOLUTION: V C:\Stuff\Vagrant_Git_Skripta_justmeandopensource\kubernetes\vagrant-provisioning\.vagrant\machines\kmaster\virtualbox sem uredil creator_uid file in mu vrednost spremenil v 1000.
+	
+	2. Vagrant was unable to mount VirtualBox shared folders.
+		Mislim, da je OK, če imaš vagrant file znotraj WSL in ne mountanega na samem windows. Sem pa to fixal, da sem inštaliral guest additions vagrant plugin, tako da so vagrant fajli lahko na /mnt/c/. Vseeno sem s tem pluginom dobival nek rsync error. Raje daj vagrant file na WSL.
+	vagrant plugin install vagrant-vbguest

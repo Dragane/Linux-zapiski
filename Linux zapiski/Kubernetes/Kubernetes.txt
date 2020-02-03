@@ -1,0 +1,1127 @@
+CONTAINER:
+je software unit, v katerem je zapakirana application code, skupaj z libraryji in dependencyji. Tako lahko teče na desktopu ali na cloudu.
+Containerji izkoristijo prednost OS virtualizacije, ki omogoča aplikacijam, da si delijo OS tako, da izolirajo procese in nadzirajo koliko do koliko resursov (CPU, RAM, disk) ti procesi dostopajo.
+
+CONTAINER vs VM vs tradicionalna infrastruktura:
+.
+.
+.
+.
+.
+
+KUBERNETES ARHITEKTURA:
+	-Clusters and nodes (master and worker nodes)
+Cluster je poglavitni element kubernetesa. Sestavljen je iz node-ov. Vsak node je posamezen virtualni, ali fizični host.
+Vsak cluster je sestavljen iz več worker node-ov (ki deployajo, run in manage containerske aplikacije) ter en master node, ki upravlja in nadzira worker node.
+
+Master node
+Poganja scheduler service, ki avtomatizira kdaj in kam se containerji deployajo, glede na zahteve developerja in resursov. 
+
+Worker node
+Vsak worker node vsebuje tool, ki se uporablja za managiranje kontainerjev (npr. Docker) in agenta z imenom Kubelet, ki sprejema in executa ukaze iz master noda.
+
+
+	-PODS:
+Pod je najmanjša enota, ki jo lahko deployamo. Je building block kubernetesa. Če recimo želimo poganjati nginx container, bomo dejansko poganjali pod. Pod pa ni ekvivalenten containerju. Pod enkapsulira vso konfiguracijo potrebno za poganjanje določene aplikacije. Podi definirajo containerje, ki jih želimo poganjati in storage resurse, ki jih potrebujemo. 
+So dober način, kako logično grupiramo več containerjev v skupni deployment. Vsak container, ki je registriran na pod, bo deployan na isti kubernetes node. Sharajo enak linux kernel in enak namespace. Dva containerja, ki tečeta v istem podu, si bosta torej sharala network, storage in cpu resurse. Vsi containerji v podu so exposani na en unikatni IP dostopen znotraj kubernetes clusterja.
+Podi so grupa containerjev, ki si delijo enake storage resurse in enak network. Omogočajo scalability v Kubernetesu: Če ima določen container v podu več prometa, bo Kubernetes repliciral pod po ostalih  nodih v clusterju. Zato je dobra praksa, da so podi kompaktni, tako da vsebujejo containerje, ki si delijo resurse. Ponavadi imamo 1 pod za 1 container. 
+
+	-REPLICA SETS:
+Ker ni ravno veliko aplikacij ki bi tekle na eni instance, je Kubernetes ustvaril Replica Set. Ta nam omogoča poganjanje večih instanc enega poda. Replica Setu lahko povemo, koliko instanc želimo poganjati in replica set nam bo to zagotovil. Tudi ko en pod crashira, bo replica set ustvaril novega.
+
+
+
+Deployment upravlja s kreacijo in stanjem (state) aplikacij v kontejnerjih. Specificira koliko replik poda bo teklo na clusterju. Če pod faila, bo deployment kreiral nov pod.
+
+	-Istio service mesh
+Kubernetes lahko deplyoja in scala pode, vendar ne more managirati, ali avtomatizirati rout med njimi. Prav tako ne ponuja nobenih orodij za nadzor, secure ali debug teh povezav. Z rastjo števila containerjev, se število povezav med njimi eksponentno poveča.
+Enter Istio je open source service mesh layer za Kubernetes clusterje. Vsakemu clusterju doda "sidecar" container, ki je neviden programerjem in administratorjem, ki konfigurira, monitorira in upravlja z interakcijami med containerji.
+Istio ponuja tudi dashboard, ki ga DevOps, ali administratorji uporabljajo za monitoriranje latence, time-in-service errorjev in ostalih karakteristik med containerji. 
+Vgradi security, identity management, ki neautoriziranim preprečije spoofing service calla med containerji in AAA zmogljivosti, ki jih security admini uporabljajo za monitoriranje clusterja.
+
+	-Knative in serverless computing (kay-native)
+Je open source platforma, ki sedi na Kubernetesu in omogoča dve glavni prednosti za cloud native development.
+Serverless computing je relativno nov način deployanja kode, ki naredi cloud native aplikacije bolj efficient in cost-effective. Namesto, da se deploya on-going instanca kode, ki sedi v idle, ko čaka na requeste, serverless computing omogoča uporabo kode, ko se ta potrebuje. Scaling glede na to, ali se povečujejo/zmanjšujejo zahteve.
+Knative developerjem omogoča enkratno buildanje containerja in ga poganjati kot software service ali serverless function. Vse je developerju transparentno. Knative poskrbi za detajle v ozadju, developer pa se osredotoči na kodo.
+Ob containiziranju kode developerji opravljajo mnogo ponavljajočih se korakov: generiranje config fajlov, inštaliranje dependencyjev, upravljanje z logi in tracing, pisanje integracij/deplyomenta (CI/CD skripte). Knative poskrbi, da so te naloge lažje, z avtomatizacijo preko 3 korakov:
+-Build: Knative’s Build component automatically transforms source code into a cloud native container or function. Specifically, it pulls the code from repository, installs the required dependencies, builds the container image, and puts it in a container registry for other developers to use. Developers need to specify the location of these components so Knative can find them, but once that’s done, Knative automates the build.
+Serve: The Serve component runs containers as scalable services; it can scale up to thousands of container instances or scale down to none (called scaling to zero). In addition, Serve has two very useful features:
+-Configuration, which saves versions of a container (called snapshots) every time you push the container to production and lets you run those versions concurrently.
+Service routing, which lets you direct different amounts of traffic to these versions. You can use these features together to gradually phase a container rollout or to stage a canary test of a containerized application before putting it into global production.
+-Event: Event enables specified events to trigger container-based services or functions. This is especially integral to Knative’s serverless capabilities; something needs to tell the system to bring up a function when needed. Event allows teams to express ‘interest’ in types of events, and it then automatically connects to the event producer and routs the events to the container, eliminating the need to program these connections.
+
+------------------------
+
+Minikube je software, ki omogoča okolje kubernetes. Poizkušaj to inštalirati na centos VM.
+
+
+------------------------
+Navodila za inštalacijo kubernetesa na centos 7:
+1. Inštaliral sem ga z https://www.linuxtechi.com/install-kubernetes-1-7-centos7-rhel7/
+2. Naredil First Pod v Step 4 na tem vodiču: https://www.howtoforge.com/tutorial/centos-kubernetes-docker-cluster/
+
+------------------------
+
+Random komande:
+kubeadm init; inicializira master node. Na koncu inštalacije pokaže token, s katerim joinamo worker node nanj.
+kubeadm token list; pokaže trenutni token master noda, s katerim lahko worker node joinamo nanj.
+
+
+
+kubectl cluster-info ; basic komanda za pregled delovanja clusterja.
+kubectl get nodes; Prikaz vseh nodov v clusterju.
+kubectl get pod -o wide; prikaz podov. "-o wide" parameter nam doda še info, na katerem nodu se pod nahaja in podov Cluster IP. Če poda ne vidimo, je možno, da smo v drugem namespacu. To preverimo z dodatnim parametrom "--all-namespaces".
+kubectl get deployments; prikaz vseh deployev.
+kubectl get cs; get component status.
+kubectl describe deployment nginx; tu vidimo opis deploymenta, ki smo mu dali ime nginx. Z describe komando vidimo detajlni opis različnih kubernetes virov, kot so podi, deploymenti ali servici.
+
+
+
+kubectl get services; Izvedemo "get" na trenutnih servicih. To nam pokaže node, na katerih teče neki web service. Lahko tudi "kubectl get svc".
+curl worker-node1:31248; s curl komando pogledamo HTML kodo nginx strani.
+kubectl delete deployment nginx; izbrišemo deployment z imenom ngnix.
+kubectl create service nodeport nginx --tcp=80:80; ko je deploy narejen, lahko port exposamo navzven.
+
+
+
+kubectl get all --namespace=kubernetes-dashboard
+kubectl apply -f dashboard-2b1.yaml 
+
+
+
+kubectl run nginx --image nginx --replicas 2; zaženemo pod z dvema replikama.
+kubectl scale deploy nginx --replicas 2; ne zaženemo zgornje komande, ampak to, če pod s tem imenom (nginx) že laufa.
+kubectl delete deploy mojshell; izbriše deployan container myshell. Imagi na nodih ostanejo. Nikoli ne veš, na kateri workernode se da container.
+kubectl delete svc mojshell; izbriše service mojshell.  
+kubectl logs nginx-6db489d4b7-pw22r; pogledamo loge tega noda.
+kubectl port-fowrward nginx-6db489d4b7-pw22r 8080:80; forwardamo port 80 od containerja na 8080 od localhosta. 
+
+
+
+
+
+--------------------------
+
+Dodatno za pogledati:
+
+-Container Network Interface (CNI)
+	V kubernetesu imajo nodi med sabo network imenovan Container Network Interface (CNI). Uporablja se flannel, calico ali weave. V mojem primeru sem uporabil weave.
+
+-Iskanje in vnos Pod Network namespaces:
+	Vsakemu Podu se dodeli lasten network namespace (netns). To je linuxov način, ki nudi izolacijo med network napravami (isto kot workgroup v windows?).
+	Druga razlaga. Namespace je kot particija. Imamo default namespace, public namespace, in kube-system namespace. V Kube-system namespace spadajo pods, containers in vsi resursi za delovanje clusterja.
+	kubectl get ns ; spisek vseh trenutnih namespacov.
+	kubectl -n kubernetes-dashboard get all ; pogledamo pode in service kubernetes-dashboard namespaca.
+	
+	
+-Ni kubernetes, ampak poglej kaj je to vagrant. Kot vidim je nek tool za provisioning virtualk v virtualboxu.
+	https://www.youtube.com/watch?v=brqAMyayjrI
+
+-Komanda za štart kubernetes dashboarda, da nanj lahko dostopajo vsi:
+	kubectl proxy --address 0.0.0.0 --accept-hosts '.*'
+	
+-Komanda za kreiranje novega tokena na master nodu:
+	kubeadm token create --print-join-command
+
+-V živo izpisuje errorje. V mojem primeru recimo gledam, zakaj so nodi not ready.
+	journalctl -fu kubelet
+	
+-Kubeadm - admin command to provision and manage cluster components
+-kubelet - is a component/agent that runs on the worker nodes
+-kubectl - is a tool to interact with your k8s cluster
+-Minikube - Is a single node Kubernetes cluster in a virtual machine
+
+
+-Dobival sem naslednji error, ko sem dal kubectl get nodes. To je zato, ker sem server init zbrisal in dodal novega. Certifikat se je spremenil.
+	Unable to connect to the server: x509: certificate signed by unknown authority (possibly because of "crypto/rsa: verification error" while trying to verify candidate authority certificate "kubernetes")
+	Rešitev: sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+	Ali če je remote master node: scp root@172.42.42.100:/etc/kubernetes/admin.conf ~/.kube/config
+	Če uporabljamo k3s
+
+
+-kubeadm reset
+	Odstrani worker node in mislim, da je po tem potrebno celo ponovno inicializirati master node. Pozor, spremeni se tudi certifikat (beri zgoraj). Poženemo ga tako na master nodu kot na worker nodih.
+	
+-Graceful izbris noda iz clusterja
+kubectl get nodes
+kubectl drain <node-name> 
+kubectl drain <node-name> --ignore-daemonsets --delete-local-data ; verjetno boš rabil to komando
+kops edit ig nodes ; če uporabjaš kops. Karkoli že je kops.
+kubectl delete node <node-name>
+kops update cluster --yes
+-Dodajanje labla na node. S tem lahko image deployamo na node s specifičnim lablom. Recimo disktype=fast. Label je poljuben. Karkoli.
+	kubectl label node <node-name> <label=name>
+		-Prikaži label specifičnega noda:
+			kubectl get node <node-name> --show-labels
+
+
+
+---------------------------------
+[ Kube 3 ] Kubernetes single node cluster using microk8s
+Microk8s vs minikube
+Za minikube moraš imeti nameščen virtualbox. Če inštaliraš minikube, se ti bo virtualka avtomatsko provisionirala. 
+Microk8s pa bo mašino, na kateri ga poganjaš spremenil v cluster. Primeren je za testiranje in učenje kubernetesa. Bolj je lightweight od minikube, saj ne bo poganjal virtualke. Prav tako je inštalacija zelo hitra.
+Za inštalacijo potrebujemo snap repo. Ubuntu 18 ga ima nameščenega po defaultu. Pazimo, da na naši mašini ni predhodno nameščenega Docker.
+sudo snap install microk8s --classic
+microk8s.kubectl cluster-info
+alias sudo='sudo ' ; sudo komando damo v alias. Mogoče ni ravno tako mišljeno, da se dela.
+alias kubectl='sudo microk8s.kubectl' ; da ne rabimo vpisovati celotne komande, ampak samo kubectl.
+kubectl run nginx --image nginx ; deployamo nginx.
+kubectl expose deployment nginx --type ClusterIP --port 80 ; exposamo port 80 z metodo ClusterIP.
+sudo apt-get install elinks ; potrebujemo package elinks za dostop do cluster IP.
+elinks 10.152.183.51 ; Preko terminala vidimo nginx page.
+microk8s.reset ; pobriše vse naše deploymente in service.
+sudo microk8s.enable dashboard ; avtomatsko se inštalira dashboard.
+
+
+[ Kube 5 Discussion 1 ] How to set up Kubernets Dashboard Web UI
+	Za inštalacijo dashboarda bomo iz justmeandopensource Git repositorija uporabili samo skripto sa_cluster_admin.yaml v mapi dashboard. Z njo bomo kreirali "Service Account".
+kubectl get ns ; spisek vseh namespacov. Na začetku bomo videli samo spisek defaultnih namespacov.
+	
+	Iz uradne strani (kubernetes dashboard UT) dobimo link za inštalacijo dashboarda.
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.0.0-beta8/aio/deploy/recommended.yaml ;
+	
+	Med inštalacijo vidimo, da se je kreiral account "kubernetes-dashboard". Ta nima vseh pravic, zato bomo uporabili tisto skripto sa_cluster_admin.yaml, z novim cluster admim accountom. 
+kubectl get ns ; Zdaj vidimo, da je ustvarjen nov namespace z imenom "kubernetes-dashboard".
+kubectl -n kubernetes-dashboard get all ; vsi podi, servici, deploymenti in replica seti v namespacu "kubernetes-dashboard". Tu vidimo, da kubernetes-dashboard service teče na portu 443. A je ta port, na podu, kjer ta service teče, premapiran v neko drugo vrednost. Da vidimo, vrednost porta na podu uporabimo naslednjo komando:
+	kubectl -n kubernetes-dashboard describe service kubernetes-dashboard ; V vrstici "endpoint" vidimo dejansko vrednost tega porta. V mojem primeru 8443.
+	
+	Da forwardamo dejanski port (moj je 8443), lahko uporabimo 2 metodi. Port forwading in NodePort service.  
+	1. metoda ; Port Forwarding: 
+kubectl -n kubernetes-dashboard port-forward kubernetes-dashboard-5996555fd8-dczl2 8000:8443 ; To nam ustvari port forwarding proxy, ki port 8443 iz poda forwarda na port 8000 na naš localhost. Pozor, ker je originalno port 443 (https), moramo v url vpisati https:\\localhost:8000
+
+	2. metoda ; nodeport: kubectl -n kubernetes-dashboard edit svc kubernetes-dashboard ; tu editamo "type:" iz "ClusterIP" v "NodePort". Če ne specificiramo porta, bo service tekel na random NodePortu. Da port specificiramo, ustvarimo novo vrstico "nodePort:", pod vrstico "targetPort:" in ju dodelimo neko porljubno vrednost (moj bo 32323).
+kubectl -n kubernetes-dashboard get svc ; Tu zdaj vidimo type kot NodePort in naš 32323 forwardan port. Če vrednost porta ne dodelimo, bo sistem sam izbral poljuben port med 30000 - 32767.
+	Opomba: Pri meni povezava preko nodeport ni delovala. Problem je bil v tem, da je iptables blokiral dostop. Na masternode sem izvedel komando sudo "sudo iptables -A FORWARD -j ACCEPT". Ko sem to komando izvedel, sem se lahko povezal na nodeport tako master noda kot worker noda. Ker se je po vsakem rebootu iptables resetiral, sem inštaliral package iptables-persistent in to komando dodal v /etc/iptables/rules.v4. Še vendo ni delalo. Preveri zakaj. 
+	
+	Web interface nam sedaj podnudi opcijo s prijavo s tokenom. Da pridobimo token izvedemo sledeče:
+	kubectl -n kubernetes-dashboard get sa ; zlistamo service accounte.
+	kubectl -n kubernetes-dashboard describe sa kubernetes-dashboard ; Opis service accounta z imenom kubernetes-dashboard. Notri vidimo vrstico "Tokens". Token skopiramo in vpišemo:
+	kubectl -n kubernetes-dashboard describe secret kubernetes-dashboard kubernetes-dashboard-token-7zl8b ; Token iz zgornje vrstice se je imenoval kubernetes-dashboard-token-7zl8b. To nam bo izpisalo celoten token, ki ga bo potrebno prilepiti v Web GUI.
+	Ker pa ta defaultni service account nima nekih pravic, bomo ustvarili svojega userja v kube-system namespace, ki bo imel Cluster role kot Cluster-Admin. Poženemo našo skripto:
+	kubectl create -f sa_cluster_admin.yaml
+	kubectl -n kube-system get sa ; pogledamo našega novea userja v kube-system namespacu. Ime ima dashboard-admin. 
+	kubectl -n kube-system describe sa dashboard-admin ; Pogledamo njegov token (dashboard-admin-token-8jdwj).
+	kubectl -n kube-system describe secret dashboard-admin-token-8jdwj ; Izpiše se nam token, ki ga pastamo v dashboard za login.
+	
+
+[ Kube 6 ] Running Docker Containers in Kubernetes Cluster
+	Gledamo v živo, kako se dodajajo containerji v defaultni namespace:
+watch kubectl get all -o wide
+kubectl run myshell -it --image busybox -- sh ; Naredimo busybox container z imenom "myshell", v interaktivnem načinu (-it) in zaženemo shell ( -- sh). V oknu ker opazujemo get all -o wide, bomo videli, da se je ustvaril nov pod. V stolpcu node vidimo, na kateri node je šel.
+
+watch sudo k3s crictl images ; na vseh nodih poženemo še to komando, da vidimo, kako se bo zlovdal containerd image. V vodiču je uporabljen docker, zato je njegova komanda "watch sudo docker images".
+
+Ker smo pri kreaciji containerja uporabili komando -- sh, se nam odpre shell iz containerja. Lahko recimo pingamo google in pogledamo če deluje. Ko gemo ven iz shella, container še vedno ostane prisoten, kar je jasno vidmo v kubectl  get all -o wide oknu. Izbrišemo ga lahko z:
+kubectl delete deploy myshell 
+kubectl run myshell --rm -it --image busybox -- sh ; če želimo, da se pod izbriše takoj, ko gremo ven iz njegovega shella, dodamo opcijo --rm.
+kubectl run nginx --image nginx ; zdaj za test deployamo nginx container.
+kubectl port-forward nginx-6db489d4b7-c8nxm 8080:80 ; Prvi način port forwardanja je, da naredimo port forward containerjevega porta 80 na port 8080 od localhosta. Drugi način je da ustvarimo service. 4 vrstice spodaj.
+kubectl port-forward nginx-6db489d4b7-c8nxm 8080:80 ; Prvi način port forwardanja je, da naredimo port forward containerjevega porta 80 na port 8080 od localhosta. Drugi način je da ustvarimo service. 4 vrstice spodaj.
+kubectl logs nginx-6db489d4b7-c8nxm ; pogledamo loge tega poda. Vidi se lepo, da smo se na WEB gui od nginxa povezovali.
+kubectl scale deploy nginx --replicas 5 ; Ker nginx pod že teče v ozadju, lahko poženemo še več instanc (replik) tega containerja. V našem primeru 5.
+kubectl describe pod nginx-6db489d4b7-8xrn2 ; vidimo vse evente od poda. Kdaj je bil kreiran, štartan...
+kubectl expose deployment nginx --type NodePort --port 80 ; Ustvarimo service, kjer exposamo port 80 z NodePortom.
+kubectl describe svc nginx ; Pogledamo novoustvarjeni servie. V vrstici Endpoints vidimo IPje vseh podov na katerih se nginx deployment nahaja. Na ta service se sedaj lahko z browserjem povežemo s katerimkoli IPjem od nodov in portom, ki ga vidimo v vrstici "nodeport", ali pa v oknu kubectl get all -o wide pod service pogledamo, kam se je port 80 premapiral.
+kubectl get deploy nginx -o yaml > /tmp/nginx.yaml ; iz obstoječega deploymenta nginx lahko sedaj kreiramo yaml file (-o je output) in ga shranimo v /tmp/ folder.
+	Iz deployment yaml fajla smo odstranili vse kar ne potrebujemo: C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 6 ] Running Docker Containers in Kubernetes Cluster\nginx.yaml
+kubectl get service nginx -o yaml > /tmp/nginx-service.yaml ; enako kot deployment, le da tu yaml fajl ustvarimo iz servica.
+	Iz service yaml fajla smo odstranili vse kar ne potrebujemo: C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 6 ] Running Docker Containers in Kubernetes Cluster\nginx-service.yaml
+kubectl delete deploy nginx ; pobrišemo nginx deployment
+kubectl delete service nginx ; pobrišemo nginx service
+kubectl create -f /tmp/nginx.yaml ; iz prej ustvarjenega yaml fajla ustvarimo deployment nginx
+kubectl create -f /tmp/nginx-service.yaml ; iz prej ustvarjenega yaml fajla ustvarimo service nginx
+kubectl delete -f /tmp/nginx-service.yaml ; Direktno preko yaml fajla izbrišemo service.
+kubectl delete -f /tmp/nginx.yaml ; Direktno preko yaml fajla izbrišemo deployment.
+
+	
+[ Kube 7 ] Kubernetes Pods Replicasets & Deployments	
+Pod je najmanjši element v Kubernetesu. Dobro je, če uporabljmo en container na pod, čeprav lahko v teoriji poganjamo več containerjev v podu. To pa ni najbolje skalabilno. Replica poskrbi, da lahko poganjamo več enakih podov. Prav tako poskrbi, da držimo enako število podov čez cel čas. Tudi če en pod izbrišemo, bo replica ustvarila novega, glede na naše nastavljeno število. 
+Basic yaml file za kreiranje poda (youtube vodič): C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 7 ] Kubernetes Pods Replicasets & Deployments\1-nginx-pod.yaml
+
+watch kubectl get all -o wide ; dodelimo eno okno, ki bo opazovala trenutne/nove pode/service/deploymente.
+kubectl create -f  1-nginx-pod.yaml ; ustvarimo pod iz basic yaml fajla iz git repositorija youtube vodiča. Dokler ne ustvarimo servica, se na ta pod ne bomo mogli povezati.
+kubectl get events ; pogledamo loge/evente v kubernetesu. Recimo vidim kdaj se je pod ustvaril.	
+kubectl delete pod nginx ; Pod lahko zbrišemo na tak način, z imenom poda.
+kubectl delete -f 1-nginx-pod.yaml ; drugi način, kako izbrišemo pod, z yaml fajlom. Glede na to, da nimamo nastavljene replice, ko izbrišemo pod, se ta ne postavi nazaj.
+
+	Replicaset:
+Za load sharing bomo zdaj deployali multiple instances od nginx. Tu pride v igro replicaset. Poglej zdaj file C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 7 ] Kubernetes Pods Replicasets & Deployments\1-nginx-replicaset.yaml
+
+kubectl create -f 1-nginx-replicaset.yaml ; deployamo ta replicaset. V oknu kjer "gledamo kubectl get all -o wide" zdaj vidimo novo ustvarjene pode. Desired je, koliko replica setov želimo imeti (v yaml fajlu "replicas"), currect (koliko podov je ready/v pripravljanju) in ready (koliko jih je ready).
+kubectl delete pod/nginx-replicaset-fszp5 ; če zdaj želimo izbrisati en pod z njegovim imenom, bo replicaset poskrbel, da se bo nov enak pod takoj nanovo skreiral (Deisred je bilo 2).
+kubectl delete replicaset.apps/nginx-replicaset ; celoten replicaset izbrišemo z imenom.
+
+	Deployment:
+Deployment je uporaben zato, ker ko želimo izvesti neki update, nam to lahko pojebe našo aplikacijo. Deployment poskrbi za postopen update. Recimo poskrbi, da je v vsakem danem trenutku dostopnih vsaj 25% podov. Deployment v sebi že avtomatsko vsebuje replicaset. Zato nam replicaset ni potrebno kreirati. Glej file C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 7 ] Kubernetes Pods Replicasets & Deployments. Fajl je podoben, kot tisti od replicaset. 
+
+kubectl create -f 1-nginx-deployment.yaml ; iz yaml fajla kreiramo deployment. V oknu kubectl get all -o wide zdaj vidimo kreirane pode, deployment in replicasete.
+
+kubectl describe pod/nginx-deploy-6db489d4b7-4jsx8 | less ; Vidimo informacije o enem izmed naključno izbranih podov. V teh informacijah je predvsem zanimiva vrstica "Controlled By", kjer vidimo, kateri replicaset upravlja s tem podom. 
+
+kubectl describe replicaset.apps/nginx-deploy-6db489d4b7 |less ; tu je zanimiva predvsem vrstica "Selector". Tu vidimo, da ta replicaset upravlja z vsemi podi, ki imajo naš prej določen label run=nginx. Zanimiva pa je tudi tu vrstica "Controlled By". Tu vidimo, ali smo ta replicaset ustvarili ročno, ali se je samodejno kreiral, ko smo ustvarili deployment. 
+
+kubectl get pods -l run=nginx ; spisek vseh podov, ki imajo label "run" z vrednostjo "nginx".
+
+kubectl scale deploy nginx-deploy --replicas=3 ; Ročno nastavljanje, koliko bo enakih podov. vedno je bolje, če uporabljamo yaml file.
+
+kubectl delete deploy nginx-deploy ; z imenom izbrišemo deploy.
+
+
+
+NAslednje stvari potrebujemo, ko iz nule delamo yaml file. Če znamo to na pamet, lahko yaml file napišemo sami. 
+api version 
+kind ; kakšen resource želimo deployati.
+metadata ; vsebuje ime resursa, ki ga želimo deployati.
+template ; specifikacije containerja, ali poda. 
+
+Če začenjamo od začetka, pa je najlažje narediti yaml file iz že nekega obstoječega poda. Obstajajo že defaultni podi, ki jih najdemo v kube-system namespacu.
+kubectl -n kube-system get pods -o wide ; pogledamo obstoječe pode.
+kubectl -n kube-system get pod coredns-d798c9dd-dvk9j -o yaml > /tmp/mypod.yaml ; exportamo nek obstoječ pod v yaml file /tmp/mypod.yaml. Izbrišemo stvari, ki niso za nas pomembne in ustvarimo naš nov yaml file.
+
+
+[ Kube 8 ] Kubernetes Namespaces & Contexts
+kubectl get ns ; spisek vseh namespacov.
+
+[ Kube 9 ] How to use Node Selector in Kubernetes
+Node selector je primeren, ko želimo ločiti med seboj sisteme z različnimi specifikacijami, resursi, različnimi verzijami inštaliranega softwera in želimo da nam aplikacija teče na točno določenem hardwaru. Določimo torej na kateri node bo naš pod schedulan. To naredimo tako, da določenim nodom dodelimo specifične lable.
+
+kubectl label node workernode1 demoserver=true ; workernode1 smo zdaj dodelili label demoserver z vredostjo "true".
+kubectl get node --show-labels ; prikaže node in vse njihove lable.
+ 
+V yaml fajlu sem moral dodati, tisto kar je zakomentirano, torej nodeSelector: in : usbdrive: "true". Poglej fajl C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 7 ] Kubernetes Pods Replicasets & Deployments\1-nginx-deployment.yaml. Če zdaj ta yaml fajl deplojamo, nam bo šel pod na tisti node, ki ima label specificiran v yaml fajlu.
+
+kubectl describe pod nginx-deploy |less ; Tu zdaj v vrstici "Node-Selectors:  demoserver=true" vidimo, na kateri node je šel pod.
+
+
+[ Kube 9.1 ] PodNodeSelector Admission Control Plugin | Assigning pods to nodes
+V prejšnjem poglavju smo videli, kako pod dodelimo specifičnemu nodu s pomočjo nodeselectorja. To pa je lahko dolgotrajno delo, v primeru, da imamo veliko podov. S PodNodeSelector pluginom določimo, da so vsi podi v določenem namespacu dodeljeni na specifično rupo nodeov. Kljub temu, da uporabljamo  PodNodeSelector plugin, pa je to pravzaprav Node-Selector, zato bo nodom potrebno dodeliti label.
+
+kubectl label node workernode1 env=prod ; Dodamo label "env" z vrednostjo "prod" na workernode1.
+kubectl label node masternode env=dev ; Dodamo label "env" z vrednostjo "dev" na masternode.
+
+Na masternodu moramo inštalirati plugin. To storimo tako, da v fajlu /etc/kubernetes/manifests/kube-apiserver.yaml uredimo vrstico --enable-admission-plugins=NodeRestriction, da zgleda tako: --enable-admission-plugins=NodeRestriction,PodNodeSelector. Ko ta fajl uredimo, se bodo spremembe avtomatsko applyale. Cluster bo nekaj sekund zaradi tega nedostopen, saj gredo vse interakcije ki jih opravljamo skozi apiserver pod.
+sudo k3s server --kube-apiserver-arg enable-admission-plugins=NodeRestriction,PodNodeSelector ; na k3s sem moral ročno vpisati parametre s komando.	
+
+kubectl create ns dev ; ustvarimo dev namespace
+kubectl create ns prod ; ustvarimo prod namespace
+
+Nato sem iz kubernetesove uradne strani (googlal sem PodNodeSelector) iz navodil za "Configuration Annotation Format" skopiral annotation "scheduler.alpha.kubernetes.io/node-selector: name-of-node-selector".
+kubectl edit namespace dev ; urejam konfiguracijo namespaca. Znotraj objekta "metadata:", pod objekt "name: dev", dodam objekt "annotations" ki mu dodam vrednost scheduler.alpha.kubernetes.io/node-selector: "env=dev".
+
+Config izgleda tako:
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    scheduler.alpha.kubernetes.io/node-selector: env=dev
+  creationTimestamp: "2020-01-08T14:35:27Z"
+  name: dev
+  resourceVersion: "162531"
+  selfLink: /api/v1/namespaces/dev
+  uid: 6dac1ad3-6cdb-4d61-a505-663db87f2af6
+spec:
+  finalizers:
+  - kubernetes
+status:
+  phase: Active
+
+kubectl -n dev run nginx --image nginx --replicas 4 ; Dodamo nginx container v dev samespace. Te zdaj lahko vidimo, če preverimo, kateri podi tečejo v dev namespacu. Vidimo, da se je zagnal objekt deployment.
+kubectl -n dev get pod nginx-6db489d4b7-l844f -o yaml | less ; enega izmed randomy deployanih podov izpišemo v yaml obliki. Tu bomo videli vrstico nodeSelector, kjer je definirano, na kateri node se bo pod deployal. Annotation, ki smo ga prej dodali, bo to vrstico dodal vsakemu podu, ki ga deployamo. 
+kubectl describe ns dev ; Tu zdaj vidimo tisti annotation, ki smo ga prej dodali: Annotations:  scheduler.alpha.kubernetes.io/node-selector: env=dev
+
+
+
+[ Kube 10 ] Kubernetes DaemonSets
+
+DaemonSet je pod, ki se deploya na vse node v clusterju. 1 pod na 1 node. Lahko ga deployamo samo na node, ki imajo nek specifičen label. Recimo imaš ene node, ki imajo GPU in tja želiš dodati svoj pod. Vsem nodom z GPU dodaš label. DaemonSet poskrbi, da se na vsakega izmed teh nodov deploya en pod. Če pod z lablom, ki ga kontrolira daemonset ročno izbrišemo, bo daemonset poskrbel, da na temu nodu kreira nov pod. 
+V yaml fajlu je ta način deploya viden kot "kind: DaemonSet". Dodal sem komentarje v daemonset yaml fajl: C:\Users\Dragan\Google Drive\Linux zapiski\Kubernetes\Youtube vodič\[ Kube 10 ] Kubernetes DaemonSets\1-nginx-daemonset.yaml
+
+kubectl describe daemonset nginx-daemonset ;  v vrstici "Selector:" vidimo, katere pode managira ta naš daemonset. Vsak pod, ki smo mu dali label demotype in nosi vrednost nginx-daemonset-demo bo pod upravljanjem našega daemonseta. Nodeselctor vrtica vidimo, da ni izpolnjena. Prav tako pa vidimo pod "Labels:", da tudi naš daemonset nosi enak label kot podi.
+
+kubectl -n kube-system get daemonset ; v clusterju že po defaultu teče nekaj sistemskih daemonsetov. Vidimo recimo calico-node. To je container overlay network. S tem lahko containerji komunicirajo s podi. Dani so v enak network. Kljub temu, da so nodi v različnih networkih, lahko containerji v podu na enem nodu komunicirajo s containerjem s podom na nodu iz durgega networka. Ta pod mora biti running na vseh nodih, vključno s master nodom. 
+
+kubectl -n kube-system get daemonset kube-proxy -o yaml ; Če želimo napisati yaml fajl iz nule, lahko za zgled vzamemo enega izmed default daemonsetov in jih izpišemo kot yaml obliko. Naš nov file lahko prilagodimo tako, da tudi izbrišemo stvari, ki jih ne potrebujemo.
+
+
+
+[ Kube 11 ] Jobs & Cronjobs in Kubernetes Cluster 
+		Yaml fajli, ki jih poganjamo so kot primer na google drivu oštevilčeni, tako kot so tu oštevilčeni primeri.
+Job poskrbi, da je pod running, dokler ne javi exit status 0. Če pod, ki ga poganja job ubijemo, preden sistem dobi status 0, potem se ustvari nov pod. Ko pod uspešno opravi svoj job, se mu status spremeni v Completed. Jobu se spremeni "Completions". Ko se job neha izvajati, se ne pobriše.
+
+1.
+kubectl create -f 2-job.yaml ; Zaženemo job iz yaml fajla.
+kubectl describe job helloworld ; Vidimo recimo informacije, kdaj se je job startal/končal, čas izvajanja, status Running/Succeeded/Failed, Events.
+
+kubectl delete job helloworld ; ker se job po končanju izvajana ne izbriše, ga izbrišemo ročno. 
+
+2.
+kubectl create -f 2-job.yaml ; Deployamo job, znotraj katerega imamo sleep 60, kar pomeni, da se bo job izvajal 60s. Če pod med izvajanjem ročno izbrišemo, bo sistem kreiral nov job.
+kubectl delete -f 2-job.yaml ; Izbrišemo job.
+
+3.
+kubectl create -f 2-job.yaml ; Dodali smo vrstico "completions:", ki bo job izvedla tolikokrat, koliko smo definirali. Job se bo izvajal sekvenčno, torej ko se prvi job konča, se ustvari nov pod in prične z izvajanjem. 
+kubectl describe job helloworld
+To vidimo v vrticah "Prallelism: 1" in "Completions: 2".
+
+4.
+kubectl create -f 2-job.yaml ; Dodali smo še vrstico "Parallelism: 3" in spremenili "Completions: 6". To pomeni, da se bo job moral uspešno izvesti 6x, a se bodo izvajali 3 podi z jobom naenkrat.
+
+5. 
+kubectl create -f 2-job.yaml ; Če se pod neuspešno kreira iz kakršnih koli razlogov (v našem primeru ls na neobstoječ folder), se bo pod sekvenčo poizkušal kreirati z neomejenim številom poizkusov.
+
+6.
+kubectl create -f 2-job.yaml ; Dodamo vrstico "backoffLimit: 2", ki bo po 3 poizkusih preprečila nadaljno izvajanje poda. Kljub temu, da smo izbrali cifro 2, bo kubernetes izvedel 3 neuspešne poizkuse. 
+kubectl describe job helloworld ; V events vidimo BackoffLimitExceeded, ko je bil dosežen limit backoffLimit. Takrat se nehajo provisionirati podi.
+
+7.
+kubectl create -f 2-job.yaml ; Dodamo vrstico "activeDeadlineSeconds: 10". To je uporabno recimo, ko vemo, da se naš job ne bi smel izvajati dlje kot 10s. V našem primeru, se bo po 10s prekinil, saj je naš job "sleep 60".
+kubectl describe job helloworld ; V events vidimo razlog zakaj se podi ne provisionirajo več. DeadlineExceeded.
+
+
+V yaml fajlu lahko specificiramo Cronjob, kdaj želimo poganjati job. 
+1. 
+kubectl create -f 2-cronjob.yaml ; Vsakič, ko cronjob zažene naš želeni job, se bo kreiral nov job. Po defaultu kubernetes drži history za 3 successful jobe, kot completed in samo 1 failed job. Nato začne z overwritom, ko se nov job kreira.
+
+kubectl delete cronjob helloworld-cron ; včasih se bo po uporabi te komande kakšen pod ne bo izbrisal in bomo morali ročno počistiti ostanke z recimo kubectl delete pods --all.
+
+2. 
+kubectl create -f 2-cronjob.yaml ; V yaml fajlu smo specificirali število successful in failed job history na 0. V vodiču pravi, da se bo s tem job vedno izbrisal, pod pa se pustil. Meni pa se je zdelo, da se oboje lepo izbriše.
+
+3.
+V primeru, da želimo analizirati neko težavo z našim cronjobom, lahko cronjob suspendamo. Ko suspendamo cronjob, se podi, ki so v progressu, ali successful ne bodo stopirali. Preprečili bomo le, da se novi cronjobi in podi ne bodo kreirali. Suspend lahko specificiramo bodisi v yaml fajlu, ali pa ročno s komando. Priporočeno seveda v yaml fajlu, zaradi potreb po revision controlu (kdo je suspendal job, kdaj).
+kubectl apply -f 2-cronjob.yaml ; Applyamo yaml file s suspend: true na že tekoč job. Če bi recimo dali create namesto apply, bi dobili odgovor, da job s tem imenom že obstaja. Če želimo s
+kubectl describe cronjob helloworld-cron ; tu v vrstici "Suspend:" vidimo, ali se je applyal naš parameter. Če želimo "Suspend:" spremeniti v "false", torej, da je izklopljen, moramo bodisi izbrisati vrstico "Suspend" iz našega yaml fajla, ali pa ji spremeniti vrednost iz true v false. Nato ponovno poženemo "kubectl apply".
+
+kubectl patch cronjob helloworld-cron -p '{"spec":{"suspend":false}}' ; lahko pa stanje suspenda spremenimo s komando. Oklepaji so način, kako se yaml ureja.
+
+4. V yaml lahko dodamo vrstico concurrentPolicy: ima lahko tri vrednosti: Allow (defaultna verdnost, Forbid, Replace. ConcurrentPolicy nam pove, ali lahko vzporedno poganjamo več jbov. Recimo en se še izvaja, a se po cronjobu drugi že začne izvajati. Tu je potrebno biti pozoren, saj ko job faila, takoj prične kreirati novi job. Forbid vrednost bo poskrbela, da počakamo, da se prejšnji job preneha izvajati in šele nato začne z novim jobom. Replace pa zamenja že obstoječ tekoči job z novim. Recimo, da se naš job normalno izvaja nekaj sekund. Cronjob prične z izvajanjem novea joba čez minuto. Če opazi, da se naš prejšnji job še ni izvedel do konca, ga bo zamenjal z novim.
+
+
+[ Kube 11.1 ] Deleting Jobs in Kubernetes after completion using feature gate TTLAfterFinished
+Po defaultu, ko se job completa, še vedno ostane v sistemu in ga je potrebno ročno izbrisati. Da pa bi se job samodejno izbrisal, po tem ko se completa, potrebujemo uporabo "feature gate". Feature Gate je kot stikalo za vklop/izklop določenih želenih funkcij kubernetesa. Mi bomo vklopili funkcijo TTLAfterFinished.
+Logiramo se na master node, ter v mapi /etc/kubernetes/manifests/ urejamo kube-apiserver.yaml ter kube-controller-manager.yaml.
+
+A) Najprej uredimo file kube-apiserver.yaml. Ko naredimo spremembo, bo sistem avtomatsko zaznal spremembo in takrat ponovno zagnal pod v kube-system z imenom kube-apiserver-kmaster.example.com. Vrstico dodamo kamorkoli pod "- command:" vrednostjo "- --feature-gates=TTLAfterFinished=true". 
+
+B) Enako je potrebno narediti v fajlu kube-controller-manager.yaml. Kamorkoli v spec: > containers: > - command: vsavimo enako vrstico: "- --feature-gates=TTLAfterFinished=true".
+
+V yaml fajl od joba je potrebno dodati še en specification, ki smo ga dobili na uradni strani kubernetesa, po googlanju "ttl controller". 
+
+
+[ Kube 12 ] Init Containers in Kubernetes Cluster
+Use case: Init container je container, ki se požene, preden se požene dejanski container. Imamo recimo container, v katerem želimo nekaj narediti. Ne želimo pa tega izvesti znotraj tega containerja, da bi ohranili velikost containerja majhno. Tako imamo ta init container, ki bo izvedel akcijo in pripravi dejanski container.
+Če recimo deployamo web aplication in je source code v github repotu. Takrat lahko dodamo init container, ki preveri source code in jo da v volume. Ta volume je nato sharan med init containerjem in dejanskim containerjem. Ko se init container completa. Dejanski container se ne štarta, dokler init container ne konča svojega izvajanja. Init container ne moremo poganjati v neskončnost. Akcijo opravi le enkrat. Ko se akcija completa, se prične ustvarjati dejanski container. Lahko imaš več init containerjev. Poganjajo se sekvenčno. Ko se en konča, se starta drugi. Ko vsi init containerji končajo z izvajanjem ze prične izvajati še dejanski container. 
+Če init container faila, se dejanski container ne bo izvedel. V tem primeru se bo pod restartal. Če tega ne želimo, lahko restart policy nastavimo na "never".
+Če želimo, lahko uporabljamo tudi scale in povečamo (zmanjšamo) število nodov, in vse bi moralo delovati.
+
+Primer:
+Z yaml fajlom bomo kreirali volume, ki bo sharan med init containerjem in dejanskim nginx containerjem. Vse kar bo init container naredil je, da bo kreiral index.html file v shared volumu. Ko se dejanski nginx container provisionira, bo mountal that shared volume in prikazal index.html file. 
+
+kubectl describe deploy nginx-deploy ; vidimo informacije o init containerju, kam se mu mounta shared volume, kaj executa. Vidimo tudi informacije o dejanskem containerju, tipu shared voluma.
+
+kubectl expose deploy nginx-deploy --type NodePort --port 80 ; z nodeportom exposamo port 80. Na to web aplikacijo se preko url kateregakoli noda lahko povežemo. Port vidimo seveda v kubectl get all -o wide.
+
+
+
+[ Kube 13 ] Using Persistent Volumes and Claims in Kubernetes Cluster
+Vse podatke, ki jih shranimo v aplikacijo bodo obstajali le, dokler pod obstaja. Ko gre pod down, in se reschedula na neki novi node, podem naših podatkov ne bo več. V primeru, da želimo podatke ohraniti, moramo uporabljati persistent volumes.
+
+Static provisioning (v tem vodiču bo prikazan static provisioning):
+a) Persistent Volume (PV) moramo najprej kreirati z yaml fajlom. Administratorji bodo PV kreirali.  
+b) Userji pa bodo requestali ta PV s Persistent Volume Claim (PVC), ki je prav tako yaml file. Povejo recimo, da se deploya mysql/web aplikacija. Potrebujem PV, da hranim database/web data. Potrebujem recimo 5GB storage. Nato admin kreira PV s 5GB. Dokler PV ni kreiran, ga ne moreš claimat.
+c) Kreiramo pod, ki uprablja PVC, da pridemo do PV. 
+
+Če je PV velik 10GB in smo v našem PVC specificirali samo 1GB in nihče drug ni zahteval tega PV, potem bo naš PVC dobil vseh 10GB. PV in PVC sta 1 na 1 mapping, kar pomeni ?? da imamo lahko 1 PV na 1 PVC.
+
+
+Dynamic provisioning:
+Admin bo kreiral Storage Class. V PVC je potrebno definirati ta Storage Class in Storage Class se bo provisioniral avtomatsko.
+
+Tipi presistent volumov:
+https://kubernetes.io/docs/concepts/storage/persistent-volumes/#types-of-persistent-volumes
+
+V vodiču bomo pogledali bomo tip HostPath.
+
+
+ReclaimPolicy: Lifecycle of persistent volume. Če izbrišemo pod, ki je uporabljal PV uporabimo, ti. 
+a) Retain ; data bo še vedno tam. Noben drug PVC ne bo dobil tega PVC, razen če admin izbriše vsebino tega PVC. 
+b) recycle ; bolj za dynamic provisioning in je deprecated.
+c) Delete ; ko izbrišemo pod in PVC se izbriše PV in njegovi podatki na njem.
+
+Access Mode: 
+a) RWO (Read Write Once) - če je naš pod na več nodih, bo samo prvi node imel pravice Read in Write na tem PV. Vsi ostali nodi lahko izvajajo samo Read.
+b) RWM (Read Write Many) - Lahko je mountan na več nodih, in vsi podi na teh nodih imajo pravice Read in Write.
+c) RO (Read Only) - Mounta ga neomejeno število podov na katerihkoli nodih, vendar lahko izvajajo samo Read.
+
+
+1. Kreiranje hostPath PV:
+hostPath je način PV, ki je v bistvu mapa na enem izmed naših nodov. Prijavili se bomo na en node in ustvarili folder. Ko poženeš pod na tem nodu, bo ta mapa mountana. Tudi ko pod ne deluje več, se bodo podatki ohranili na tem nodu. Ta PV bo torej deloval samo, ko bo pod tekel na nodu, kjer je ta mapa. Zato se hostPath ponavadi ne uporablja v produkciji.
+
+Prijavimo se torej na en node in kreiramo mapo, v našem primeru je bil node "kworker1" in tam izveden "mkdir /kube". 
+Damo ji pravice chmod 777.
+kubectl create -f 4-pv-hostpath.yaml ; Z yaml fajlom kreiramo PV.
+kubectl get pv ; Preverimo spisek PVjev. Morali bi sedaj tega, ki smo kreirali videti.
+
+a) kubectl create -f 4-pvc-hostpath.yaml ; Kreirali smo PVC. Namenoma smo spremenili Access Mode iz ReadWriteOnce v ReadWriteMany, da bi videli, kaj se zgodi, če se Access Mode od PVC ne ujema s PV.
+kubectl get pvc ; Preverimo PVCje. Vidimo, da ta, ki smo ga kreirali, stoji na "pending" zato, ker se mu "accessModes" ne ujema. 
+kubectl describe pvc pvc-hostpath ; Vidimo provision faied. 
+kubectl delete -f 4-pvc-hostpath.yaml ; izbrišemo ta nedelujoči PVC.
+
+b) kubectl create -f 4-pvc-hostpath.yaml ; Kreiramo PVC s pravimi podatki.
+kubectl get pvc ; Zdaj vidimo status "Bound". Vidimo, da je kapaciteta 1GB, čeprav smo v PVC zahtevali le 100MB. Dobili smo celotno količino PV.
+kubectl get pv ; tudi tu zdaj vidimo status: Bound. Vidimo pa tudi kateri claim (PVC) je zahteval ta PV.
+kubectl create -f 4-busybox-pv-hostpath.yaml ; Ustvarimo pod in upamo, da se nam da na kworker1 node, saj imamo tam PV. V našem primeru je res tako bilo.
+kubectl describe pod busybox ; vidimo zdaj vrstico "Mounts:". Vidimo recimo tudi Volumes: Type je PersistentVolumeClaim in ime PVC. Vidimo, da se je tudi container startal.
+kubectl exec busybox ls /mydata ; gremo znotraj containerja imenovanega busybox in izvedemo ls.
+kubectl delete pod busybox ; izbrišemo ta pod.
+kubectl get pv,pvc ; vidimo da je Status tudi po izbrisu poda še vedno Bound.
+kubectl delete pvc pvc-hostpath ; izbrišemo naš PVC.
+kubectl get pv,pvc ; vidimo, da je PV še prisoten, vendar je njegov status zdaj Released. Ker je Reclaim Policy "Retain", pomeni, da tudi ko izbrišemo PVC, bo PV ostal.
+kubectl create -f 4-pvc-hostpath.yaml ; če ponovno naredimo PVC z zahtevo do istega PV, nanj ne bomo več mogli dostopati. Vedno lahko samo en določen PVC dostopa do PV. Status PVC ostane "pending".
+
+c) Schedulali bi sedaj pod, na node, na katerem naš PV ne obstaja. Torej kworker2. Uporabili bomo nodeselector v yaml fajlu od poda in določili, da se pod schedula samo na node z lablom demoserver: "true".
+kubectl delete -f 4-pvc-hostpath.yaml ; ponovno izbrišemo PVC.
+kubectl delete -f 4-pv-hostpath.yaml ; Izbrišemo še PV.
+kubectl create -f 4-pv-hostpath.yaml ; ponovno ustvarimo PV
+kubectl create -f 4-pvc-hostpath.yaml ; ponovno ustvarimo PVC.
+kubectl get pv,pvc ; Vidimo status bound.
+kubectl label node kworker2.example.com demoserver=true ; na kworker2 zdaj damo label demoserver=true.
+kubectl get nodes -l demoserver=true ; pogledamo, če se je label res določil na node.
+kubectl create -f 4-busybox-pv-hostpath.yaml ; naredimo pod, ki se bo zdaj avtomatsko schedulal na drugi node, torej kworker2. Tisti ki nima PV vsebine folderja.
+kubectl exec busybox ls /mydata ; zlistamo mountan folder znontraj containerja. Dobimo nič, saj na nodu, kjer je pod ni PV folderja. Zanimivo je, če gremo zdaj direktno na ta node kworker2, bomo videli, da se je vseeno kreirala mapa /kube, vendar persistent vsebine v njej ni. Če bi v naš volume iz containerja kreirali nek fajl, bi se ta fajl pojavil na kworker2 in le kworker2. Kworker1 ne bi dobil nobenih informacij o tem. Pod lahko piše samo v folder in bere samo iz folderja na nodu kjer se nahaja. 
+
+2. Reclaim policy:
+Default Reclaim Policy je Retain in bo vedno imel to vrednost, če v našem PV fajlu tega nismo specificirali. To pomeni, da tudi ko izbrišemo PVC, bo PV še vendo ostal, in podatki bodo še vedno v PV mapi. To bomo zdaj spremenili.
+
+kubectl get pv pv-hostpath -o yaml | less ; najprej samo pogledamo vrstico persistentVolumeReclaimPlicy, da vidimo kako izgleda in jo kopiramo.
+
+a) Reclaim Policy - Delete
+Izbrišemo pod, pv in pvc in nadaljujemo.
+kubectl create -f 4-pv-hostpath.yaml ; kreiramo nov pv. 
+kubectl get pv ; pogledamo če se je pv kreiral s pravim relaim policy, torej delete. Status je available, ker še noben pvc ni podal zahteve po tem pv.
+kubectl create -f 4-pvc-hostpath.yaml ; Ustvarimo pvc.
+kubectl get pvc ; vidimo, da je pvc kreiran in status je bound.
+kubectl delete pvc pvc-hostpath ; Izbrišemo zdaj PVC. PV bi se tudi moral izbrisati, saj imamo Policy nastavljen na Delete. Vendar se PV ne izbriše!
+kubectl describe pv pv-hostpath ; Vidimo, da se volume ni uspel izbrisati zaradi host_path deleter only supports /tmp/.+ but received provided /kube. To pomeni, da bo autodelete deloval le za mape, ki se nahajajo v /tmp/ folderju. To bomo sedaj naredili.
+kubectl delete -f 4-pv-hostpath.yaml ; najprej ročno izbrišemo PV.
+
+b) Spremenimo, da se PV folder nahaja na nodu v /tmp/kube, da se bo lahko nato avtomatsko izbrisal. Na nodu kworker1 moramo najprej to mapo ustvariti z mkdir. 
+kubectl create -f 4-pv-hostpath.yaml ; kreiramo nov PV z novim parametrom, ki kaže na mapo /tmp/kube
+kubectl create -f 4-pvc-hostpath.yaml ; kreiramo PVC za ta PV.
+kubectl delete -f 4-pvc-hostpath.yaml ; izbrišemo PVC. Zdaj se je izbrisal tudi PV, saj ima mapo v /tmp/.
+kubectl get pv,pvc ; vidimo da sta zdaj takp pvc kot tudi pv izbrisana.
+
+
+[ Kube 14 ] Using Secrets in Kubernetes
+
+Če se recimo naš application container želi povezati na mysql bazo, lahko hardcodamo username:password v application container. Ta podatek pa bo viden vsem, ki vidijo ta docker/container image. Zato bi bilo najbolje kreirati secret resource, v katerega bi dali username:password. Ko kreiramo containersko aplikacijo, pa lahko potegnemo secret iz secret fajla. 
+Secrete lahko ustvarimo z yaml fajlom, ali ba kubectl secret komando. 
+V yaml fajlu sta username in password zapisana v base64 enkriptirani obliki. Da dobimo base64 enkriptirano obliko našege usernama ali passworda izvedemo:
+
+1a. Kreiranje secreta preko yaml fajla:
+echo -n 'kubeadmin' | base64 ; To bo naš username. Vrednost te komande nato pastamo v yaml fajl pod "username:".
+kubectl get secrets ; tu vidimo defaut secret od kubernetesa, v default namespacu.
+kubectl get secret secret-demo -o yaml ; tu vidimo yaml obliko secreta in naš username:password, ki smo ga dodali.
+kubectl describe secret secret-demo ; tu vidimo praktično enak output, le da ne vidimo username:password v tekstovni obliki. Vidimo le, koliko key/value parov imamo. Dva torej username in password.
+kubectl delete secret secret-demo ; izbrišemo secret.
+
+1b. Secret kreiran direktno iz kubectl command line.
+kubectl create secret generic secret-demo --from-literal=username=kubeadmin --from-literal=password=mypassword 
+kubectl delete secret secret-demo ; izbrišemo secret.
+
+1c. Secret kreiran iz obstoječih fajlov, kjer imamo spravljene username, in/ali passworde.  
+kubectl create secret generic secret-demo --from-file=username=/home/dragan/userorpass/username --from-file=password=/home/dragan/userorpass/password
+
+
+
+2. Secret lahko v pod specifikaciji uporabimo na več načinov. 
+-Kot environtment variable v našem containerju. Secret bo tako mountan kot ENV variabla, ki jo lahko uporabljamo znotraj containerja. 
+-Ali mountana kot volume. Secret se bo tako mountal kot posamezni fajli znotraj containerja.
+
+a) Kot ENV (glej 2a 5-pod-secret-env.yaml):
+kubectl create -f 5-pod-secret-env.yaml ; kreiramo pod, v katerem je definiran ENV.
+kubectl exec -it busybox -- sh ; gremo v ta naš kreiran container.
+env ; prikažemo našo ENV variablo. Tu vidimo vrstico "myusername=", kjer je definiran naš username, ki smo ga vzeli iz secreta.
+echo $myusername ; tako je pa drugi način, da vidimo našo vrednost env variable.
+
+b) Kot volume (glej 2b 5-pod-secret-volume.yaml): 
+kubectl create -f 5-pod-secret-volume.yaml ; kreiramo pod, v katerem secret mountamo kot volume. 
+kubectl exec -it busybox -- sh ; gremo znotraj našea containerja.
+env | grep myusername ; Vidimo, da nam ta komanda ne vrne odgovora, saj secret ne uporabljamo kot env. 
+ls /mydata/ ; tu pa zdaj vidimo, da sta znotraj te mape fajla imenovana "username" in "password". To sta dva key/value para, ki smo jih definirali v našem secretu. Za vsak key/value par, se kreira fajl.
+
+3. Spremenimo resource secret-demo (spremenimo password). V yaml fajlu bomo dali nek nov password, ki bo ponovno kriptiran z base64. Prav tako bomo dodali še nov key/value pair "name:". Vsak naš tako novi, kot tudi obstoječi pod bo dobil nove vrednosti secreta. 
+kubectl apply -f 5-secrets.yaml ; posodobimo naš secret-demo z novo vrednostjo passworda in dodanim novim key/value parom "name:".
+kubectl describe secret secret-demo ; Preverimo, če so se spremembe uveljavile. Vidimo takoj po tem, ko vidimo novo dodani name: pod "Data".
+kubectl exec -it busybox -- sh ; Gremo znotraj containerja, ki nam od prejšnjega koraka še vedno teče.
+ls /mydata ; zdaj vidimo takoj tudi nov fajl imenovan "name". To pomeni, da je mounted secret volume takoj iz secret-demo povlekel nov key/value pair in posodobil vrednost passworda.
+
+
+
+[ Kube 15 ] Using ConfigMaps in Kubernetes Cluster
+Zelo podobno bo kot secrets. Sintaksa bo enaka. 
+Če imamo recimo aplikacijo, ki uporablja konfiguracijo, lahko kreiramo ConfiMap v našem kubernetes clusterju in jo uporabljamo v našem podu. Config lahko uporabljamo znotraj docker containerja vendar težava nastane takrat, ko želimo konfiguracijo updatati. Takrat je potrebno kreirati nov docker container image in ga ponovno deployati. Če pa imamo ConfigMap v kubernetes clusterju, se bo config updatal dinamično tudi znotraj poda. Sprememba se ne bo izvedla takoj, ampak moramo malo počakati (5-10s, odvisno od schedulerja).
+
+1a) Deploy preko yaml fajla.
+kubectl get configmaps ; pogledamo listo config maps. Po defaultu seveda nobene v default namespacu.
+kubectl create -f 6-configmap-1.yaml ; deployamo config map
+kubectl get cm ; samo krajša različica zapisa zgornje komande get configmaps. Zdaj vidimo naš novi deployan config map demo-configmap. 
+kubectl describe configmap demo-configmap ; vidimo razen info o deployanem configmapu.
+
+
+1b) Deploy preko komande
+kubectl create configmap demo-configmap-1 --from-literal=channel.name=dacrade --from-literal=channal.owner=dragan ; config map kreiramo preko komande namesto yaml fajla.
+kubectl get cm demo-confimap-1 -o yaml ; tako kot vse, lahko v kubernetesu outputamo tudi ConfigMap kot yaml in vidimo, da je identičen, kot deploy direktno iz yaml fajla.
+
+2a) Uporaba tega ConfigMapa znotraj poda, kot ENV:
+Najbolje, da sproti odpreš yaml fajl in ga gledaš. Kar bomo tu naredili je, da bomo pullali key value iz našega ConfigMapa in ga dodelili kot environment spremenljivko, ki se bo nato uporabljala znotraj containerja. 
+kubectl create -f 6-pod-configmap-env.yaml ; deployamo pod v katerem imamo definirano iz katerega configmapa vzema podatke.
+kubectl exec -it busybox -- sh ; gremo znotraj containerja v podu. Ker imamo samo en container v podu, nam ni treba specificirati, na kateri container želimo (-c). 
+echo $CHANNELNAME ; Zdaj vidimo, da se je spremenljivka pravilno deklarirala. 
+
+2b) Uporaba tega ConfigMapa preko mountanega voluma znotraj containerja (tako kot secret):
+sudo kubectl create -f 6-pod-configmap-volume.yaml ; pod kreiramo
+sudo kubectl exec busybox -it -- sh ; gremo na container shell
+ls /mydata/ ; tu vidimo zdaj dva fajla. Vsak fajl za vsak key/value pair.
+
+2c) Update ConfigMapa. ConfigMap lahko editamo on the fly. V našem confiu bomo spremenili channel.name.
+kubectl edit cm demo-configmap ; komanda za urejanje deployanega ConfigMapa.
+sudo kubectl get cm demo-configmap -o yaml ; pogledamo našo spremembo
+kubectl exec -it busybox sh ; gremo znotraj containerja, da vidimo, če je pobral nov config
+cat /mydata/channel.name ; Izpišemo config v tem volumi in pogledamo, če je dobil novo vrednost channel.name.
+
+2d) Uporaba fajla za kreiranje configmapa (config fajl je bil že kreiran s strani vodiča. Sem ga priložil.):
+kubectl create configmap mysql-demo-config --from-file=misc/my.cnf
+
+2e) Kreiranje configmapa iz fajla - drugič (tole mogoče še enkrat poglej)
+Zdaj imamo nekoliko drugačen configmap file. 
+kubectl create -f 6-configmap-2.yaml ; iz tega yaml fajla kreiramo config map.
+kubectl create -f 6-pod-configmap-mysql-volume.yaml ; deployamo pod
+kubectl exec -it busybox sh ; gremo v container
+ls /mydata ; morali bi zdaj videti znotraj fajl my.cnf
+cat mydata/my.cnf ; izpišemo vsebino fajla.
+vi 6-configmap-2.yaml ; Naredimo eno spremembo v config map yaml fajlu. Spremenil sem ševilko porta.
+kubectl apply -f 6-configmap-2.yaml ; applyamo še enkrat yaml fajl od config mapa, da applya vse spremembe.
+kubectl get cm mysql-demo-config -o yaml ; Vidimo, da se sprememba vidi v config mapu.
+kubectl exec -it busybox sh ; ponovno gremo v container.
+cat /mydata/my.cnf ; vidimo da se sprememba vidi tudi znotraj containerja, po tem ko smo applyali config map fajl.
+
+[ Kube 16 ] Using Resource Quotas & Limits in Kubernetes Cluster
+V produkcijskem environmentu moramo poskrbeti, da bo imel vsak user nek resource limit. To deluje na podlagi namespacov. Quotas in limiti so veljavni le znotraj namespaca in ne celotnega clusterja. Resource quota nam pove, koliko resursov lahko deployamo v naš cluster. Lahko recimo rečemo, da nočemo več kot 100 podov. Ali več kot 2 joba. Ali več kot 5 cron jobov. 
+
+1. ResourceQuota: limit na število kateregakoli resursa (pod, deployment, configmap...).
+kubectl create namespace quota-demo-ns ; kreiramo en namespace.
+kubectl create -f 7-quota-count.yaml ; kreiramo ResourceQuota.
+kubectl -n quota-demo-ns get resourcequota ; Pogledamo, če se je resourcequota kreiral.
+kubectl -n quota-demo-ns describe quota quota-demo1 ; v pobliki tabele vidimo limit ter ternutno število porabljenih quotas.
+kubectl -n quota-demo-ns create configmap cm1 --from-literal=name=dragan ; za namene testiranja quote kreiramo en configmap preko komande. 
+kubectl -n quota-demo-ns describe quota quota-demo1 ; po tem ko smo kreirali ConfigMap preverimo, če se je število uporabljenih CM zvečalo na 1.
+kubectl -n quota-demo-ns create configmap cm2 --from-literal=name=dragan ; ko poizkušamo kreirati še en config map, nam ne pusti. Javlja, da so dosegli quoto. Enako bi se zgodilo tudi s podi. Če recimo deployamo pod z enim replicasetom, bo quota OK. Če pa želimo scalati replicaset na več kot 2 (recimo 3), pa bo to sicer uspelo. Vendar pa po pisalo "Ready 2/3". 
+
+2.
+ResourceQuota: limit na CPU usage/Memory...
+Primer recimo, če imamo en namespace, ki je testen in en, ki je produkcijski, si želimo, da ima naš testni namespace manjši limit na memory, kot produkcijski. Limit je torej na celoten namespace in ne posamezen pod.
+kubectl -n quota-demo-ns create -f 7-quota-mem.yaml ; deployamo quoto, ki nam omeji RAM.
+kubectl -n quota-demo-ns describe quota quota-demo-mem ; Preverimo, če je quota zdaj aktivna.
+2a) kubectl create -f 7-pod-quota-mem.yaml ; Javlja error, ko želimo deployati pod. Če pod deployamo v namespace, ki ima specificiran resource limit, moramo limit nastaviti v specifikacijah poda. 
+2b) kubectl create -f 7-pod-quota-mem.yaml ; pod spet kreiramo, tokrat z limitom specificiranim znotraj yaml fajla od poda.
+kubectl -n quota-demo-ns describe quota quota-demo-mem ; zdaj vidimo porabljenih 100MB RAM od možnih 500MB, specificiraih v ResourceQuotu.
+2c) nano 7-pod-quota-mem.yaml ; Zdaj spremenimo memory limit v 800MB, kar je več kot limit samega namespaca.
+kubectl create -f 7-pod-quota-mem.yaml ; Sistem nam ne pusti kreacije tega poda, saj je njegov memory limit prevelik, glede na limit namespaca.
+
+3. Limit Range ; Dodamo limit na vsak resource znotraj namespaca. Ni nam portrebno specificirati limita znotraj pod specifikacije.
+3a) kubectl create -f 7-quota-limitrange.yaml ; Ustvarimo limit range.
+kubectl -n quota-demo-ns describe limitrange mem-limitrang ; pogledamo, če se je limitrange ustvaril in trenutno porabo. Zdaj ne bomo rabili nastavljati limita znotraj pod specifikacije.
+kubectl -n quota-demo-ns describe limitrange mem-limitrange ; pogledamo, če se je limitrange kreiral.
+kubectl create -f 7-pod-quota-mem.yam ; kreiramo pod, brez da bi bili resource limiti nastavljeni v yaml fajlu. Limite se vzamejo iz samega limit ranga.
+
+
+3b) Limits.memory in requests.memory: Tu v limitrangu nastavimo, koliko bo max skupna količina porabljenega RAM-a vseh resourcov (podov...) (limits.memory) v tem namespace in koliko bo max enega samega resource (request.memory). 
+kubectl apply -f 7-quota-mem.yaml ; applyamo zdaj limit, kjer smo dodali še requests.memory vrstico.
+kubectl -n quota-demo-ns describe quota quota-demo-mem ; Preverimo če so se spremembe (dodatek request.memory) uveljavile.
+3b1: kubectl create -f 7-pod-quota-mem.yaml ; Ne moremo kreirati poda, ker smo v pod yaml fajlu specificirali "memory: 200Mi", a limit namespaca v limit rangu je 100MB na pod. Glede na to, da vspecifikacijah nismo navedli request.memory, bo pod domneval, da je request.memory enak kot limit.memory torej 200MB, kar je seveda nad 100MB omejitvijo limitranga.
+
+3b2: kubectl create -f 7-pod-quota-mem.yam ; Zdaj je kreacija poda uspešna, saj imamo memory limite v mejah, ki jih dovoljuje limitrange.
+kubectl -n quota-demo-ns describe pod nginx ; tu vidimo limite, ki smo jih nastavili.
+
+
+[ Kube 17 ] Renaming Kubernetes Nodes
+
+[ Kube 18 ] How to setup Rancher to manage your Kubernetes Cluster (ne deluje pravilo s Calico, zato glej poleg videa 18 tudi Tutorial video 18, discussion 1, ki deploya k8s s flannel namesto calico. Prav tako je verzija kubernetesa 1.15, ki deluje z rancher.)
+Rancher je open source cloud orcestration in cluster management tool. Z njim bomo v tem koraku upravljali s kubernetes clusterjem. Rancher dostopa do management interfaca, tako da ne bo potrebno uporabljati kubectl komande. V real worldu bodo kubectl uporabljali le cluster admini. Rancher ima Web UI. Rancher lahko uporabljamo za managiranje več clusterjev. Sam kubernetes dashboard, ki smo ga prej inštalirali je vezan na samo en cluster. Če ima naša organizacija več clusterjev (bodisi v cloudu, ali v firmi), lahko uporabljamo rancher za upravljanje z njimi.
+Z rancherjem lahko cluster tudi provisioniramo.
+Ko inštaliramo rancher, nam bo ponudil nekaj komand, ki jih bomo morali pognati na našem že obstoječem clusterju. V našem tutorialo bomo ravno naš obstoječi kubernetes cluster uporavljali z rancherjem. Rancher podpira GKE (google kubernetes engine), Amazon EKS (managed kubernetes service), Microsoft Azure. Z rancherjem lahko provisioniramo kubernetes cluster na te tri ponudnike, ali pa uporabimo svojo infrastrukturo.
+Rancher lahko inštaliramo na mašino, ki ima docker že nameščen, saj sam rancher teče v docker containerju.
+
+Inštaliral ga bom na eno centos mašino, kjer sem že imel docker inštaliran. Komanda za inštal je na rancher.com uradni strani, na prvi strani (docker run -d --restart=unless-stopped -p 80:80 -p 443:443 rancher/rancher). Mi smo še poleg te komande dodali parameter za mount voluma znotraj containerja, da bi imeli nek volume, ki ostane tudi po izbrisu/restartu containerja (docker run -d --restart=unless-stopped -p 80:80 -p 443:443 -v /opt/rancher:/var/lib/rancher  rancher/rancher). Original mapa bo /opt/rancher na naši host mašini. Mapa sploh ne rabi obstajati, ker jo bo docker sam kreiral tako na hostu, kot containerju. Imel pa sem težavo, da se je container konstanto restartal. V logih sem videl problem, da se na containerju ni uspela kreirati mapa mountanega voluma. To sem rešil z updatom dockera iz 1.13 na 1.19 na centosu.
+
+docker logs ; preverimo loge containerja.
+Če gremo na IP centosa v browserju se nam odpre rancher WEBUI. Ko dodamo novi cluster, nam bo rancher dal komando, ki jo moramo pognati na na našem clusterju. Ta bo kreirala nov namespace imenovan cattle-system. Vsi rancher resursi se bodo deployali v ta namespace.
+
+Add new cluster > Import an existing cluster > vnesi komando, ki jo zdaj vidiš na web ui.
+V našem primeru: 
+curl --insecure -sfL https://192.168.10.199/v3/import/lt5jqp24l598gnqcp4bhnnxw5chntmqczwwkgmcmgzmkgcv7jg4xhs.yaml | kubectl apply -f -
+
+kubectl -n cattle-system get all ; vidimo, da je deployan daemonset, kar pomeni en pod na vsak node. Preko njih rancher komunicira s kubernetes clusterjem. Vidimo, da so poimenovani node-agent.
+
+
+[ Kube 19 ] Performing Rolling Updates in Kubernetes
+1. Imaš aplikacijo, ki teče v produkcijskem clusterju in želiš narediti update. Aplikacije so v kontainerjih deployane po clusterju.
+Aplikacijo updatamo, zapakiramo kot container in deployamo container v cluster. 
+Glej yaml fajl.
+
+Strategy: Kako bo kubernetes upravljal z deploymentom med updatom, ko imamo kreirano repliko s specifičnim številom replik.
+Type: Bodisi 
+RollingUpdate (default): Zero downtime. Ne želimo izklopiti celotnega servica, ampak updatamo postopoma po korakih (določen procent).
+ali 
+Recreate: Terminira vse replice in vsem doda nov update.
+maxSurge: dodatne replike med updatom, poleg tistih ki jih želimo. (vrednost je lahko numerična, ali v procentih.)
+maxUnavailable: Koliko podov je lahko unavailable med rolling updatom. (vrednost je lahko numerična, ali v procentih.)
+minReadySeconds: Poveš, koliko sekund je potrebno počakati, preden se kreira nov pod. 
+revisionHistoryLimit: Vsakič, ko naredimo update, je to revision. Lahko tudi rollbackamo na prejšnji revision. Po defaultu je 10.
+
+kubectl get replicasets -o wide ; V stolpcu Images vidimo tudi verzijo našega imaga.
+
+2. Update lahko izvedemo z yaml fajlom, ali pa preko komande.
+a) Update z yaml fajlom: Vrstico, kjer je definiran image (image: nginx:1.14) spremenimo v image: nginx:1.14.2.
+kubectl apply -f 8-nginx-rolling-update.yaml ; applyamo update.
+
+Ko se update zaključi vidimo, da se je kreiral nov replicaset, z novo verzijo imaga. Stari replicaset je še ostal, le da ne poganja nobenega poda več. Kljub temu, da ne poganja več podov, pa tega replicaseta ne smemo izbrisati. Če ga, potem ne bomo mogli narediti rollback. 
+
+kubectl rollout status deployment nginx-deploy ; preverimo stanje rollouta (updata). To komando lahko uporabimo tudi med tem ko se rollout izvaja.
+
+kubectl rollout history deployment nginx-deploy ; preverimo revisione. Zaenkrat ne vidimo podatka o change-cause, torej podatka, zakaj je bil update narejen. To pride kasneje.
+
+b) Update preko komande:
+kubectl set image deployment nginx-deploy nginx=nginx:1.15
+
+kubectl rollout history deployment nginx-deploy --revision 1 ; pogledamo, kaj je bilo v določenem revisionu, v našem primeru revision 1.
+
+c) Tweakan yaml fajl za hitrejši rolling update.
+kubectl create -f 8-nginx-rolling-update.yaml ; deployamo editan yaml fajl tega deploymenta, v katerem smo malo tweakali update proces. 
+kubectl set image deployment nginx-deploy nginx=nginx:1.14.2 ; damo rolling update, ki se bo zdaj precej hitreje deployal.
+kubectl annotate deployment nginx-deploy kubernetes.io/change-cause="Updated to version 1.14.2" ; dodamo anotacijo temu updatu, ki smo ga ravno naredili.
+kubectl rollout history deployment nginx-deploy ; Preverimo revision history. Vidimo tudi našo novo anotacijo.
+kubectl set image deployment nginx-deploy nginx=nginx:1.15 --record ; celotno komando da kot annotation updata.
+kubectl rollout history deployment nginx-deploy ; Vidimo novi anotation.
+
+d) Dodamo annotation preko yaml fajla:
+kubectl apply -f 8-nginx-rolling-update.yaml ; applyamo latest nginx update z annotaionom v yaml fajlu.
+kubectl rollout history deployment nginx-deploy ; vidimo, da se je annotaion dodal, prav tako pa vidimo 3 revisione. Ena trenutna in 2 stara revisiona, kot nastavljeno v yaml fajlu.
+kubectl describe deploy nginx-deploy ; v vrstici annotations vidimo, na katerem revisionu se trenutno nahaja naš app.
+
+3. Rollback deployment na prejšnjo revizijo.
+kubectl rollout history deployment nginx-deploy ; Še enkrat preverimo celoten revision history.
+kubectl rollout undo deployment nginx-deploy ; rollout gre na prejšnji revision.
+kubectl rollout undo deployment nginx-deploy --to-revision=2 ; gremo nazaj na specifičen revision.
+
+
+4. Pause rollback. V primeru, da opazimo, da ima naš update težavo, lahko update pauziramo.
+kubectl create -f 8-nginx-rolling-update.yaml ; najprej deployamo deployment.
+kubectl set image deployment nginx-deploy nginx=nginx:latest ; nato ga poupdatamo.
+kubectl rollout pause deployment nginx-deploy ; nato pauziramo update proces.
+kubectl rollout status deployment nginx-deploy ; preverimo stanje updata, da vidimo, kje smo ga ustavili. Pri nas lahko sedaj vidimo recimo, da je 1 replicaset že na novi verziji, trije pa so še na stari. Očitno sem bil dovolj hiter s pauzo.
+kubectl rollout resume deploy nginx-deploy ; nadaljujemo z rolloutom.
+
+5. Rolloutamo z neobstoječo verzijo docker imaga:
+kubectl set image deploy nginx-deploy nginx=nginx:0.0.0 ; verzija 0.0.0 nginx docker imaga zagotovo ne obstaja.
+kubectl rollout status deploy nginx-deploy ; vidimo, da status kaže 1 updatana replika, vendar vidimo, da sistem tega imaga ne more pullati.
+
+
+6. Recreate: tip rolling updata. Do zdaj smo uprabljali defaulten RollingUpdate.
+Recreate je upraben, ko naša aplikacija ni v produkciji, ampak v development stagu, kjer si lahko privoščimo downtime. Recreate namreč ugasne vse pode in jih poupdata. To je precej hitreje kot RollingUpdate.
+kubectl create -f 8-nginx-rolling-update.yaml ; vidimo, da so se vsi podi ugasnili in na novo postavili z novo verzijo.
+kubectl describe deploy nginx-deploy ; v vrstici StrategyType: vidimo, da je zdaj tip updatanja kot recreate.
+kubectl set image deploy nginx-deploy nginx=nginx:latest ; enako naredimo lahko update še s komando in obnašalo se bo isto.
+
+7. V yaml fajlu smo izbrisali vse vrstice, ki so kazale, kako se bo rolling update izvedel (strategy). Hočemo pokazati, da če teh vnosov ni, potem bo naš defaulten Strategy bil RollingUpdate.
+kubectl create -f 8-nginx-rolling-update.yaml ; deployamo deployment brez parametrov za rolling update.
+kubectl describe deploy nginx-deploy ; vidimo, da je defaulten strategy RollingUpdate.
+
+
+[ Kube 20 ] NFS Persistent Volume in Kubernetes Cluster
+1. Gremo na nek host, ki bo hostal nfs-server. Pri meni je to isti server, kot host za rancher.
+yum install nfs-utils ; na nek host inštaliramo nfs server.
+systemctl enable nfs-server ; enablamo nfs server.
+systemctl start nfs-server ; startamo server.
+mkdir -p /srv/nfs/kubedata ; ustvarimo mapo. -p parameter je zato, da ustvari vse poddirektorije, ki ne obstajajo.
+chmod 777 /srv/nfs/kubedata/ ; za vsak slučaj nastavimo pravice.
+nano /etc/exports ; glej exports fajl.
+exportfs -rav ; exportamo config.
+exportfs -v ; pogledamo, kaj smo exportali.
+showmount -e ; enako pogledamo še v krajši obliki.
+
+Gremo na workernode1:
+showmount -e 192.168.10.199 ; vidimo, če server lahko dostopa do shar tega serverja.
+mount -t nfs 192.168.10.199:/srv/nfs/kubedata /mnt ; mountamo share.
+mount | grep kube ; še pogledamo, če se je uspešno mountal.
+umount /mnt/ ; unmountamo, zdaj ko vemo, da mount deluje.
+
+Enako ponovimo še na workernode2.
+mount -t nfs 192.168.10.199:/srv/nfs/kubedata /mnt
+
+2. Gremo nazaj na naš kubectl host.
+kubectl create -f 4-pv-nfs.yaml ; naredimo volume. V yaml fajlu smo dodali še IP NFS serverja.
+kubectl get pv ; pogledamo, če se je PersistentVolume kreiral.
+kubectl create -f 4-pvc-nfs.yaml ; Zdaj kreiramo PersistentVolumeClaim.
+kubectl get pv,pvc ; Vidimo zdaj STATUS: Bound tako pri PV, kot tudi PVC.
+
+Zdaj na našem NFS serverju kreiramo /srv/nfs/kubedata/index.html (nek simple hello world file), da bomo preverili, če nam nfs volume deluje. 
+
+Gremo na nek workernode, recimo 2.
+mount | grep kubedata ; Vidimo, da se je volume avtomatsko mountal, saj je naš POD zahteval PersistentVolume, ki je na voljo v NFS direktoriju.
+
+Gremo lahko še direktno v container, da pogledamo ta mount:
+kubectl exec -it nginx-deploy-59c5878995-mtkk9 -- sh ; iz našega kubectl hosta gremo direktno v container in zaženemo shell.
+cat /usr/share/nginx/html/index.html ; tu vidimo, da se prej kreiran index.html nahaja.
+kubectl expose deploy nginx-deploy --port 80 --type NodePort ; lahko še naredimo service, kjer forwardamo port 80. Gremo na en node in zaženemo url s portom, ki ga je dodelil kubernetes (kubectl get all).
+
+Če zdaj na nfs serverju editamo tisti index.html, se bo dinamično spremenil tudi v containerju. 
+
+ 
+[ Kube 21 ] How to use Statefulsets in Kubernetes Cluster
+Stateful aplikacije, so aplikacije, ki za svoje delovanje shranjujejo pri sebi neke podatke. Recimo MYSQL.
+Stateless so aplikacije, ki tega ne potrebujejo. To so po večini web aplikacije.
+Postavili bomo nek nfs-server, ki bo exportal svoj share na cluster. Za demonstracijo, bomo v tem sharu kreirali 5 poddirektorijev PV0 - PV4.
+
+Stvari, ki razlikujejo StatefulSet od deplomenta. 
+-Unique name. 
+-Unique network identity. 
+-Unique stable storage.
+-Ordered provisioning. - razloženo spodaj.
+
+Če imamo recimo 4 replica sets od StatefulSeta, bo prva replika nosila ime poda + numerična vrednost od 0 do 3.
+Ko deployaš stateful set, se po defaultu ne bodo vsi podi provisionirali paralelno. Pač pa bo počakal, da se prvi pod provisionira in je ready, nato začel s provisioniranjem drugega poda.
+Ko izbrišeš StatefulSet pa bo pode brisal ravno v obratnem vrstnem redu (LIFO). Če kakšnega poda ne bo možno popolnoma izbrisati, se proces ne bo nadaljeval.
+Če pa izvedeš rollingupdate, se bo update izvajal od zadnjega (najnovejšega) poda, do prvega. 
+Pred uporabo StatefulSeta je vedno potrebno kreirati PersistentVolume (static provisioning). Ravno to je fora. Ker, če podatkov ne rabiš, potem je aplikacija Stateless. Če pa uporabljamo cloud providerja, uporabljamo dynamic privisioning. (razloženo v prihodnosti.) Teh ni potredno predprovisionirati pred deployem stateful seta. 
+PersistentVolume Claim (PVC) lahko ročno provisioniramo, kot v preteklosti, ali pa includamo PVC template znotraj yaml fajla od poda (pod specification). Ko se enkrat zbounda s PV, se to zapomni. Vedno je potem POD vezan na isti PV. Tudi, če ta pod ročno izbrišemo, bo replicaset poskrbela, da se pod z istim imenom nanovo kreira in se mounta na spet tisti PV, ki ga je prej imel.
+
+1.
+Uredimo export file (sem ga dodal v fajlom v vodiču.)
+sudo mkdir -p /srv/nfs/kubedata ; kreiramo mapo, ki smo jo specificirali kot shared v exports fajlu
+sudo mkdir /srv/nfs/kubedata/{pv0,pv1,pv2,pv3,pv4} ; kreiramo še podmape v tem shared folderju.
+sudo chmod 777 /srv/nfs/ ; vsem subfolderjem damo pravice 777.
+exportfs -rav ; exportamo (to rabiš pri nfs setting upu.)
+exportfs -v ; vidimo če je exportano
+
+2.
+Ker imamo mi lokalen cluster in ne cloud, moramo najprej kreirati PV.
+kubectl create -f 9-sts-pv.yaml ; s tem yaml fajlom kreiramo 4 PVje. Ta jaml fajl dodajam k vodiču.
+kubectl get pv ; vidimo novo kreirane PVje.
+Tudi če izbrišemo pod, in PVC, se PV ne bo izbrisal. Spremenil se mu bo samo status iz available v Released but not available. Kar pomeni, da se PV ne izbriše in tudi ni na voljo druim PVC. 
+Če želimo ta PV omogočiti, da ga lahko drugi PVCji claimajo, moramo v specifikacijah PVja Reclaim Policy spremeniti v Release. To pobriše vse podatke na volumu. 
+V yaml fajlu od sts-nginx StatefulSeta moramo najprej definirati Headless service. Ta korak je obvezen, saj ta service linka vse pode v StatefulSetu. Glej fajl za več info.
+
+kubectl create -f  9-sts-nginx.yaml ; kreiramo stateful set.
+kubectl get all -o wide ; vidimo kako se novi podi kreirajo eden po eden. 
+kubectl get pv,pvc ; pogledamo naše prej ustvarjene PVje in nove PVCje, ki se se kreirali iz templata. Vidimo tudi, kateri pod je mountal kateri PV.
+kubectl exec -it pod/nginx-sts-2 -- sh ; gremo na enega izmed containerjev.
+touch /var/www/hello ; kreiramo zdaj fajl na ta mount.
+exit
+ls /srv/nfs/kubedata/pv2 ; pogledamo, če se je ta fajl viden na nfs serverju.
+
+kubectl delete pod/nginx-sts-3 ; vidimo da replica takoj kreira nov pod in mu dodeli isti volume, kot a je imel prejšnji container. Podatki so ohranjeni.
+
+kubectl delete sts nginx-sts ; izbrišemo celoten StatefulSet. Dokumentacija pravi, da če uporabljamo ta način brisanja, lahko za sabo pustimo pode. Zato priporočajo da scale najprej zmanjšamo na 0.
+kubectl scale sts nginx-sts --replicas 0
+kubectl delete sts nginx-sts
+
+Ko izbrišemo STS, nam to ne bo izbrisalo PersistentVolumeClaimov. To je potrebno izbrisati ročno. 
+kubectl delete pvc --all ; to še vedno ne izbriše PVjev.
+kubectl get pv,pvc ; vidimo da so se PVCji izbrisali, PVji pa so spremenili status v released. Niso na voljo novim PVCjem zato jih je potrebno izbrisati ročno.
+kubectl delete pv --all
+
+kubectl delete svc nginx-headless ;  izbrišemo še headless service.
+
+3. podManagementPolicy je zdaj Parallel v yaml fajlu od sts-nginx.
+kubectl create -f 9-sts-pv.yaml ; nanovo kreiramo PVje.
+kubectl get pv ; preverimo če so se kreirali. 
+kubectl create -f 9-sts-nginx.yaml ; vidimo da se vsi podi deployajo naenkrat. Prav tako se isto obnaša tudi rolling update.
+
+
+[ Kube 23 ] Dynamically provision NFS persistent volumes in Kubernetes
+
+V preteklosti smo vedno morali ročno najprej kreirati PV in nato PVC. Nato smo ta PVC uporabili v našem deploymentu. 
+Če uporabljamo enega izmed cloud providerjev (GKE, EKS) lahko uporabimo dynamic provisioning. 
+Zelo je zamudno, če mora admin vedno kreirati PV, če stranka naredi PVC. Obstaja pa provisioner, ki deploya PV glede na zahteve dane v PVC and PVC Templatu. Tako admin tega ne rabi delati. Ko PVC izbrišemo, se bo PV tudi izbrisal.
+
+Če pa ne uporabljamo Clouda in imamo cluster pri nas pa za take namene obstaja NFS Client Provisioning. Pogooglamo, da najdemo github link. Inštaliram ga lahko s Helm, ali pa z uporabo klasičnih yaml fajlov. 
+Imeti moramo nek NFS server.
+Deployali bomo poseben pod imenovan NFS Client Provisioner. Ta pod bo mountal recimo /srv/nfs/kubedata iz NFS servera k sebi, na /persistentvolumes. 
+Kreirati moramo storage class in usmeriti ta storageclass na ta pod. Ta pod lahko teče na kateremkoli izmed workernodov. Poskrbeti moramo, da je ta pod vedno running. Je gateway med storagom in podi. Za vsak PVC bo ta pod kreiral PV. 
+
+Morali bomo ustvariti:
+ServiceAccount
+	Role
+	RoleBinding
+	clusterRole
+	clusterRoleBinding
+
+StorageClass
+Deployment
+	Replicaset	
+		pod
+		
+
+
+1. Na NFS serverju najprej:
+mkdir /srv/nfs/kubedata -p
+chown nfsnobody: /srv/nfs/kubedata/
+Editamo /etc/export fajl, ki je med fajli v mojem vodiču.
+exportfs -rav
+exportfs -v
+
+Gremo na en worker node, da preverimo, če ta volume lahko mountamo:
+mount -t nfs 192.168.10.199:/srv/nfs/kubedata /mnt ; mount test
+mount | grep kubedata ; pogledamo če je mount bil uspešen
+
+
+2. Zdaj bomo deployali NFS Client Provision Pod.
+V nfs-provisioner folderju (yamls) imamo 3 yaml fajle. Enega za kreiranje Service Accounta, enega za StorageClass in enega za deploy tega gateway poda.
+v fajlu rbac.yaml, s katerim kreiramo ServiceAccount ob enem kreiramo še ClusterRole, Role in ServiceAccount vežemo na tedva ClusterRole/Role s ClusterRoleBinding/RoleBinding. 
+
+kubectl get clusterrole,clusterrolebinding,role,rolebinding | grep nfs ; Spremnljamo kreacijo rolov in bindingov. Vidimo, da tenutno ni teh objektov z imenom nfs.
+kubectl create -f rbac.yaml ; te objekte kreiramo.
+
+
+3. Kreiramo StorageClass.
+kubectl create -f class.yaml ; kreiramo storage class
+kubectl get storageclass ; preverimo, če se je kreiral.
+
+
+4. Deployamo ta gateway pod.
+kubectl create -f  deployment.yaml
+kubectl get pv,pvc ; vidimo, da trenutno ne obstaja noben pv, ali pvc. 
+
+5. Kreiramo en PVC. Uporabili bomo en yaml fajl iz preteklosti in ga predelali.
+kubectl create -f 4-pvc-nfs.yaml ; kreiramo pvc, kar bo triggeralo nfs-provisioner, da nam dinamično naredi PersistentVolume.
+kubectl get pv,pvc ; zdaj vidimo kreiran tako PVC, kot tudi PV, ki se je dinamično provisioniral. 
+ls /srv/nfs/kubedata/ ; na našem NFS serverju lahko zdaj izvedemo naslednjo komando. Videli bomo, da se je v našem shared folderju kreirala nova mapa z imenom od PVja.
+
+6. Kreiramo nek pod, ki bo uporabil ta PV. Uporabili bomo enega zmed starih yaml fajlov in ga malo predelali.: 4-busybox-pv-hostpath.yaml
+kubectl create -f 4-busybox-pv-hostpath.yaml
+kubectl describe pod busybox ; V vrstici mounts vidimo, kam je mountan volume. V volumes delu vidimo, da se je mountal s pomočjo PVCja. 
+kubectl exec -it busybox -- sh ; Gremo na ta container/pod.
+ls /mydata ; vidimo, da trenutno notri ni nič.
+touch /mydata/hello ; naredimo en fajl znotraj mydata. Videli bomo, če se zdaj ta fajl vidi na nfs serverju.
+ls /srv/nfs/kubedata/default-pvc1-pvc-b71ed58a-d1cd-4eb0-89be-61860ec0d961/ ; na nfs serverju zdaj vidimo, da ta fajl obstaja.
+
+7. Ko kreiramo nov POD, moramo kreirati še nov PVC. PVC smo tokrat spet malo predelali.
+kubectl create -f 4-pvc-nfs.yaml ; kreiramo nov pvc
+kubectl get pv,pvc ; vidimo tudi novi PVC in z njem kreirani PV.
+
+Če pod izbrišemo, to ne bo izbrisalo PVja, ali PVCja, saj smo PVC kreirali samostojno. Če pa izbrišemo PVC, pa se bo PV tudi izbrisal. To je pa zato, ker je reclaim policy teh PVjev nastavljen na Delete. S tem, ko se izbrišejo PVji, pa se izbrišejo tudi PV folderji na NFS serverju v shared folderju.
+
+
+[ Kube 24 ] Getting started with Helm in Kubernetes Cluster
+
+Helm je način inštaliranja kubernetes aplikacij, ki smo jih do zdaj nameščali samo preko yaml fajlov. 
+Helm ima 2 komponenti:
+	-Binary, ki a lahko namestimo na workstationu.
+	-Komponenta na strani serverja imenovana Tiller, ki je v bistvu samo POD. Ko deployamo Tiller na server, v bistvu deployamo replicaset z eno instanco Tillerja. Teče na kateremkoli worker nodu.
+V svetu helma so packagi imenovani charts namesto linux package (mysql, redis, jenkins, wordpress, k8s dashboard). Ko Helm inicializiramo, se bo ustvaril stable repository. Nato lahko package inštaliramo direktno iz tega repota. Repo lahko updatamo, ali dodamo svoj repo in znotraj damo lastne charte.
+Prednosti helma:
+Primeren za ponavljajoče taske. 
+Ko inštaliramo Helm, se bo preveril ~/.kube/config fajl, da vidi, na kateri cluster se poveže in na kateri cluster deploya Tiller komponento. Po defaultu nima securityja, tako da je dobro, če imamo security na samem clusterju.
+Uporabljati moramo RBAC (Role Based Access Control). Tiller komponenti bomo namreč dali pravice, da deploya resource v katerikoli namespace namesto nas. Saj recimo, ko rečemo:
+helm install jenkins ; Tiller bo ustvaril secret resource, configmap resource, PV, PVC, POD, Replicaset, Deployment. 
+Da bo Tiller imel vse te pravice bo za to potrebno ServiceAccount.
+ServiceAccount bo imenovan Tiller 
+ClusterRoleBinding pa bo cluster-admin. Pomeni, da bomo ClusterRole cluster-admin bindali na ta ServiceAccount. Ta ClusterRole ni ravno best practice, ker bo imel Tiller Full Admin privilege.
+
+helm init --service-account=tiller ; kreira se stable repository, da lahko inštaliramo aplikacije v naš cluster.
+
+Uporabne helm komande:
+helm help
+helm install (--values) (--name) ; inštaliramo package. Ime bo neko random, razen če passamo --name parameter. --values je fajl s custom options, ki jih želimo overwritati.
+helm fetch (zdaj "helm pull" v novi verziji ; Pulla chart lokalno, kot .tar fajl. Ne bo charta inštaliral. 
+helm list ; zlista inštalirane aplikacije.
+helm status ; pokaže status application deploymenta. 
+helm search ; iščemo za charti. 
+helm repo update ; jasno
+helm upgrade ; jasno
+helm rollback ; 
+helm delete (--purge) ; zbriše deployment. Opcija --purge izbriše še history. V helm 3 uporabljam helm uninstall.
+helm reset (--force) ; popolnoma izbriše Tiller komponento. 
+helm repo list ; pokže kateri repo smo namestili.
+
+
+
+HELM 3 - dodajanje repositorija: helm repo add stable https://kubernetes-charts.storage.googleapis.com
+-------to ni več aktualno v Helm 3 verziji. Preveri ali je sploh še kaj pomembno od tu naprej. 
+1. Installing helm:
+Google na prvi link in nato smo inštalirali "From Binary". Odpakiramo in helm binary premaknemo v /usr/bin.
+Config fajl se bo nahajal ~/.helm mapi, a se pojavi šele ko helm inicializiramo.
+
+2. Creating Service account. 
+kubectl -n kube-system create serviceaccount tiller
+
+kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller ; naredimo clusterrolebinding z imenom tiller in cluster rolo cluster-admin. Vežemo jo na aacount tiller, ki je v namespacu kube-system.
+
+kubectl get clusterrolebinding tiller ; preverimo binding.
+
+
+[ Kube 25 ] Running Jenkins in Kubernetes Cluster using Helm
+
+Uporabili bomo helm za inštalacijo jenkinsa. Za jenkins potrebujemo persistent storage, saj inštalacija "helm install jenkins" kreira PVC. Za te namene smo postavili dynamic nfs provisioning, opisan v vodiču 23. Če dynamic provisioniranja nimamo, moramo PersistentVolume kreirati sami.
+Jenkins inštalacija preko helma avtomatsko provisionira kubernetes plugin (in še nekaj ostalih pluginov). Z uporabo kubernetes plugina lahko znotraj Jenkins poda zaganjamo še slave pode. Če bomo pognali nek Jenkins job, bo ta kreiral slave pod. Ko se job konča, se bo pod izbrisal.
+
+1. Inštalacija jenkinsa
+--navodila sem moral malo predelati, ker ima vodič helm2, jaz pa helm3. Helm3 nima Tiller komponente.
+
+helm repo add stable https://kubernetes-charts.storage.googleapis.com ; najprej sem v helm dodal stable repo (očitno je to repo z imenom stable, kjer so samo stable releasi).
+helm repo update ; updatamo repo.
+Zdaj bi lahko uporabili "helm install stable/jenkins jenkins" komando, a želimo prej spremeniti več parametrov v konfiguraciji, zato bomo inštalirali malo drugače. Defaultna inštalacija se namreč namesti z neko svojo konfiguracijo. To konfiguracijo lahko exportamo, izbrišemo vse vrednosti, ki jih ne rabimo in uredimo tiste, ki jih rabimo. Če vrednosti recimo izbrišemo, se bodo inštalirale z default parametri, ki so že prej bili v export fajlu. 
+
+helm show values stable/jenkins > /tmp/jenkins-values.yaml ; exportamo configuracijo v yaml obliko in jo uredimo. Končni fajl sem dodal v vodič.
+
+kubectl create namespace jenkins ; kreiramo jenkins namespace.
+
+helm install jenkins stable/jenkins --values /tmp/jenkins-values.yaml --namespace jenkins ; inštaliramo jenkins s conf fajlom v yaml obliki.
+
+kubectl get pvc -n jenkins ; Vidimo, da se je z deployom jenkinsa kreiral PVC. Vidimo da ima status "Bound", kar pomeni, da se je vezal na nek PV. In to PV, ki se je samodejno provisioniral, ko se je PVC kreiral.
+
+kubectl get pv -n jenkins ; vidimo ta PV, ki se je dinamično provisioniral.
+
+helm status jenkins ; pogledamo, kakšen je status deploya. V Helm 2 prikaže tudi, kaj vse se je deployalo z inštalacijo tega packaga. V helm 3 pa moramo izvesti spodnji workaround.
+
+helm get manifest jenkins -n jenkins | kubectl get -f - ; workaround komanda za Helm 3, ki prikaže, kaj se je deployalo s Helm inštalacijo.
+
+ls /srv/nfs/kubedata/ ; pogledamo na nfs-serverju mapo, ki je postala PV.
+
+kubectl get all -n jenkins ; vidimo, če se vse inštalira
+
+kubectl logs pod/jenkins-69b59bf8fd-ntxhg -n jenkins ; preverimo loge jenkins poda.
+
+helm list -n jenkins ; Vidimo inštalacijo jenkinsa
+
+helm uninstall -n jenkins ; zbriše vse. Tudi PVC, kar pomeni, da se izbriše PV.
+
+
+
+[ Kube 26 ] Prometheus monitoring for Kubernetes Cluster and Grafana visualization
+
+Prmoetheus je monitoring tool narejen s strani soundclouda. Podatke bomo zbrali s prometheusom in jih prikazali v Grafani. Prometheus je bolj primeren za dinamično infrastrukturo tipa Kubernetes, kot recimo Nagios.
+Za ta tutorial rabimo Helm in NFS-Server za dynamic volume provisioning.
+S pomočjo Helma bomo najprej deployali Prometheus za namene monitoringa, nato pa še Grafano za vizualizacijo. Prometheus in Grafana bosta v svojih ločenih namespacih. Ker bo prometheus deployal veliko resourcov je dobro, da je v svojem namespacu. Tako vidimo, kaj mu vse pripada. 
+Prometheus bo deployal:
+Secrets,
+ConfigMaps,
+ServiceAccounts,
+PVC,
+ReplicaSets,
+Pods,
+DaemonSets,
+RoleBinding.
+
+
+1. S pomočjo yaml fajlov bomo postavili NFS Dynamic Provisioning. V StorageClass yaml fajl bomo dodali en parameter, ki bo naš StorageClass nastavil kot default storageclass. To pomeni, da če StorageClassa v nekem PVC ne definiramo, se bo izbral defaulten storageclass.
+
+kubectl create -f rbac.yaml -f class.yaml -f deployment.yaml ; Deployamo celoten NFS provisioning.
+kubectl get storageclass ; vidimo, da ima zdaj kreirani StorageClass v imenu končnico "default".
+
+
+2. Inštaliramo Helm. V vodiču inštalira Helm 2, mi pa že imamo Helm 3 na sistemu, ki je drugačen.
+helm search repo prometheus ; Vidimo listo prometheusov, ampak inštalirali bomo stable/prometheus.
+
+3. helm inspect values stable/prometheus > /tmp/prometheus.values ; Inštalacijske parametre preusmerimo v en fajl prometheus.values.
+
+vi /tmp/prometheus.values ; v tem fajlu zdaj uredimo port redirection, tako da je "type: Nodeport" in "nodePort: 32322". Da to najdemo, naprej search /server: in nato /type:. type spremenimo iz clusterIP v NodePort in dodamo vrstico "nodePort
+
+/persistentVolume ; če v tem fajlu iščemo persistentVolume vidimo, da se bosta kreirala 2 voluma. En 8GB in en 2GB.
+kubectl create namespace prometheus ; Ročno moramo kreirati namespace, saj Helm 3 ne podpira avtomatske kreacije namespacov.
+helm install prometheus stable/prometheus --values /tmp/prometheus.values --namespace prometheus ; inštaliramo prometheus.
+kubectl get all -n prometheus ; Vidimo več resursov, ki so se deployali, kot del prometheusa. Vidimo daemonset. Te bodo iz vsakega posameznega noda zbirali podatke.
+kubectl get pvc -n prometheus ; zdaj vidimo, da sta tu dva PVCja.
+
+4. Install Grafana.
+helm inspect values stable/grafana > /tmp/grafana.values ; ponovno exportamo inštalacijo v fajl. 
+vi /tmp/grafana.values ; tudi tu spremenimo type v NodePort in nastavimo nodePort na 32323. Omogočimo še persistence (enabled: true).
+kubectl create namespace grafana ; kreiramo namespace za grafano.
+helm install stable/grafana --values /tmp/grafana.values --namespace grafana ; inštaliramo grafano.
+
+Grafana: 
+Add data source > Prometheus > URL: http://172.42.42.101:32322 > Save
+Home > New Dashboard
+Lahko pa tudi importamo nek dashboard, ki je prednarejen. Takih je mnogo. Samo pogooglaj grafana dashboards. Mi smo na strani izbrali Data Source "Prometheus" in graf "1. Kubernetes Deployment Statefulset Daemonset metrics". Skopiramo njegov ID, ki je na strani in importamo ta IP v našo grafano. Tudi tu izberemo data source "Prometheus".
+
+
+[ Kube 31 ] Set up Nginx Ingress in Kubernetes Bare Metal
+
+Ingress je namenjen load balancingu. V našem Ddevelopment okolju smo do zdaj port exposali večinoma z NodePortom. Klient je za dostop do neke aplikacije moral vedeti IP od kateregakoli workernoda (tudi če ta node nima želenega poda, bo znal prerutati na tistega ki ga ima) in port (recimo 32323). NodePort service je poskrbel za load balancing med nodi in podi. To pa za produkcijo ni OK, saj se IPji worker nodov lahko menjajo, lahko dodamo več nodov, ali pa jih izbrišemo. To omogoča Flannel network, ki se razprostira po vseh worker nodih. 
+
+Če se naš kubernetes cluster nahaja v cloudu, recimo GKE, potem se za primere produkcijskega load balancinga uporablja resource imenovan LoadBalancer. Ker pa se naš cluster nahaja na bare metal serverjih pa moramo za load balancing poskrbeti sami.
+
+Bare metal load balancing:
+-Narediti moramo resource tipa ClusterIP (ne NodePort). Ta IP bo dostopen samo znotraj clusterja.
+-Nato moramo deployati Ingress Controller, ki je lahko bodisi daemonset, ali pa deployment. Odvisno od naših potreb. Ni nujno, da hočemo ingress controller na vseh nodih, zato ni nujno da je daemonset.
+-Nato moramo deployati Ingress Resource. To so v bistvu pravila npr: če pride zahteva za določen naslov, ga prerutaj na ta service. Ko kreiraš nek rule, bodo vsi Ingress Controllerji ta rule prejeli.
+-V našem primeru bomo deployali še Loadbalancing rešitev imenovano HAPROXY. Uporabimo lahko sicer katerokoli loadbalancing rešitev. V ta HAPROXY moramo dodati vse workernode, saj bo skrbel za loadbalancing na kateri workernode se bo nek klientov request poslal.
+-Kreirati je potrebno DNS vnose in vse vnose usmeriti vnos na HAPROXY, da bo loadbalancing po workernodih deloval.
+-Ingress Controller bo iz Ingress Resourca prebral rule in ustrezno usmeril promet na določen service. Service pa bo nato load balanciral po podih.
+
+Dogajata se torej dva loadbalancinga: 
+En je HAPROXY, ki določe na kateri workernode bo request šel. Klient mora torej poznati le URL do aplikacije (myapp.example.com). 
+Drugi je Ingress Controller na samem workernodu, ki ve, na kateri service mora request iti, glede na URL, ki ga je klient želel. Service pa bo nato izvajal loadbalancing po podih na workernodu. 
+
+
+Ingress Controllers bo kreiral naslednje resource:
+Namespace
+ServiceAccount
+ClusterRole
+ClusterRoleBinding
+ConfigMap
+Secret
+DaemonSet
+
+V tem vodiču se bomo osredotočili na Loadbalancing z Nginx. Lahko pa uporabljamo Traefik (v prihodnjih videih).
+
+
+1. Naredimo HAPROXY (Centos 7. Pri nas isti server kot rancher in nfs server.)
+yum install -y haproxy
+vi /etc/haproxy/haproxy.cfg ; Pustimo Global settinge in defaults. Zbrišemo vse od "main frontend proxys to the backends" naprej. Iz vodiča nato v yamls/ingress-demo/haproxy.cfg skopiramo vsebino in jo dodamo na konec našega haproxy.cfg fajla.
+systemctl enable haproxy
+systemctl start haproxy
+
+2. Naredimo Ingress Controller:
+Najdemo uradni git od ingressa. https://github.com/nginxinc/kubernetes-ingress. V mapi deployments kliknemo na instructions, da dobimo navodila za inštalacijo.
+git clone https://github.com/nginxinc/kubernetes-ingress.git ; Kloniramo git od ingressa.
+cd kubernetes-ingress/deployments 
+kubectl create -f common/ns-and-sa.yaml ; zaženemo ta yaml, ki kreira namespace in service-account.
+kubectl get namespace ; vidimo, da se je kreiral namespace nginx-ingress. Vse resurse, ki jih bomo deployali, se bodo dali v ta namespace.
+kubectl create -f common/default-server-secret.yaml ; zaženemo yaml fajl, ki nam bo kreiral secrete.
+kubectl create -f common/nginx-config.yaml ; zaženemo yaml, ki nam bo kreiral confige.
+kubectl apply -f rbac/rbac.yaml ; zaženemo yaml, ki nam bo kreiral clusterrole in clusterrolebinding.
+kubectl apply -f daemon-set/nginx-ingress.yaml ; deployamo nginx ingress controller kot daemonset, saj imamo le 2 workernoda.
+
+3. Naredimo Deployment naše aplikacije.
+kubectl create -f nginx-deploy-main.yaml ; deployamo čisto osnoven nginx deployment z eno repliko.
+
+4. Naredimo service tipa ClusterIP
+kubectl expose deploy nginx-deploy-main --port 80 ; v njem bomo definirali, da gredo requesti iz nginx.example.com na service ninx-deploy-main.
+
+5. Deployamo ingress resource.
+kubectl create -f ingress-resource-1.yaml ; deployamo ingress resource (kind je Ingress).
+kubectl get ing ; preverimo, če se je ingress resource deployal.
+kubectl describe ing ingress-resource-1 ; vidimo pod host, kaj vpiše klient (nginx.example.com) in kam se njegova zahteva usmeri (nginx-deploy-main:80).
+
+6. V DNS moramo zdaj vnesti nginx.example.com in ga usmeriti na haproxy server. V našem primeru smo uredili kar hosts file. HAProxy bo load balanciral zahtevo na enega izmed worker nodov. Ingress Controller na workernodu pa bo routal zahtevo na pravilen serivce. Če v url vpišemo nginx.example.com, dobimo nginx page.
+
+7. Dodamo za test še nekaj podov, da vidimo, kako se obnaša s tremi podi. 
+kubectl delete -f ingress-resource-1.yaml ; najprej izbrišemo stari ingress resource control.
+kubectl create -f nginx-deploy-blue.yaml ; deployamo en pod.
+kubectl create -f nginx-deploy-green.yaml ; deployamo drug pod. 
+kubectl expose deploy nginx-deploy-blue --port 80 ; exposamo port 80 za ta pod. (naredimo service).
+kubectl expose deploy nginx-deploy-green --port 80 ; enako naredimo s tem podom.
+kubectl create -f ingress-resource-2.yaml ; naredimo ingress resource, v katerem so zdaj definirani trije service-i. Tako bo ingress resource glede na zahtevo (url) vedel, na kateri service se ruta promet.
+Zdaj še v hosts file dodamo vnosa http://green.nginx.example.com/ in http://blue.nginx.example.com/. Če ju vnesemo v browser, se nam forwardajo na pravilen service.
+
+
+
+
+
+
+
+

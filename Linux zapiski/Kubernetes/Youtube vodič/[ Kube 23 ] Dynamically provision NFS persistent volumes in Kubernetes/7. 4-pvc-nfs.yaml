@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim # Kind je PVC
+metadata:
+  name: pvc2 # Ime PVCja. Tu zdaj damo ime pvc2, saj je bil prej pvc1.
+spec:
+  storageClassName: managed-nfs-storage # zelo pomembno, da se ime ujema z imenom, ki smo ga dali storageclassu. Lahko preveriš s "kubectl get storageclass".
+  accessModes:
+    - ReadWriteOnce # Spremenimo iz RWM v RWO.
+  resources:
+    requests:
+      storage: 100Mi # Zahtevamo tokrat 100MB, namesto 500MB.. 

@@ -1,0 +1,294 @@
+Github
+
+git clone https://github.com/Dragane/gittutorial.git ; Celoten repository zlovda in ga da v svojo mapo z njegovim imenom. 
+git status ; Pove nam razlike med našim git in tistim, ki je na githubu.
+git add <filename> ; Doda nove fajle, ali nove spremembe. Če se je sprememba uspešno dodala, lahko preverimo z git status. 
+git add . ali git add -A ; Doda vse fajle in spremembe v mapi.
+git commit -m "Added new file." ; Zaklenemo repository. Dodamo -m message v dvojnih narekovajih. To pa še ne pomeni, da je že syncan z github.com. Če commitamo brez -m, nas vrže v VI editor, kjer lahko vpišemo sporočilo v več vrsticah, iz katerega gremo ven z :wq.
+git push ; synca z github.com.
+git pull ; zlovda nove spremembe/fajle. Najbolje vsak dan pren novim delovnim dnevom.
+
+
+git tag -a v0.6.0 ; naredi tag
+git push origin v0.4.0 ; pusha tag
+git tag -l -n v* ; Preglej obstoječe tage in njihove komentarje.
+
+
+
+Docker:
+Podobno kot virtualka. Namesto "virtualka" ima ime "container". 
+
+Virtualka:
+Vsaka virtualka je sestavljena iz:
+Server -> Host OS -> Hypervisor -> <virtualka> Kernel -> bins/libs -> APP </virtualka>
+Pri tem se za vsako novo virtualko poganja nov kernel. To je potratno po resursih. Tudi zažene se precej hitreje.
+
+Container:
+Uporablja kernel od Host OS. Tako ali tako ima katerikoli Linux distribucija enak kernel.
+Server -> Host OS -> <container> bins/libs -> app </container>
+Docker uses Unix file system features to create these isolated environment.
+
+Container is a running instance of the Docker image. It is basically a snapshot of the system at the particular time.
+Image is a file. Its bundle consists of: 
+-OS
+-Software
+-Application code
+Image is defined by a docker file. Docker file is a text file with a list of steps to perform that image (configure the OS, install the software, copy the project files into the right places...).
+
+Docker file >>BUILD>> Image >>RUN>> Container
+
+Basic commands:
+docker run <image> ; iz image bo kreiral nov container. Vedno bo ta image najprej poizkusil poiskati lokalno in šele nato na webu.
+	Primer: docker run -it -d ubuntu (-d, da zaženemo container kot daemon, torej v ozadje).
+docker start <name|id> ; zažene obstoječ vendar nedejaven container.
+docker stop <name|id> ; ustavi obstoječ dejaven container. Container lahko ustavimo samo s prvimi tremi znaki njegovega ID.
+docker ps [-a] ; Prikaže vse dejavne containerje (-a prikaže še nedejavne).
+docker rm <name|id> ; izbriše container.
+docker rmi <name> ; izbriše image
+	Izbriše vse image: docker rm -vf $(docker ps -a -q)
+docker exec -it <id> bash ; Interaktivni način. Stopimo znotraj v kontainer in poženemo bash.
+docker images ; prikaže, katere image imamo pri sebi.
+docker login ; prijaviš se v docker hub. 
+docker push dragane/sowa ; v svoj repo na dockerhub pushaš določen docker image.
+docker build -t dragane/sowa . ; iz dockerfile kreira docker image. Dockerfile se nahaja v folderju kjer smo mi. Zato je na koncu pika ".".
+docker logs <name> ; pogledaš loge containerja, če teče kot detached -d.
+
+	Docker file primer:
+## Dockerfile
+FROM node:latest # Vzame OS image iz Docker Huba. Docker Hub je globalni repozitorij, katerega image lahko pullamo lokalno. V našem primeru izberemo Ubuntu image, ki ima inštaliran Node.js. Imenuje se node. Tag :latest pomeni, da izberemo zadnjo verzijo tega imaga.
+
+WORKDIR /app # Preprosto nastavimo delovni direktorij v containerju. Pripravimo, kaj se bo zgodilo v naslednji komandi spodaj.
+
+COPY . . # Kopiramo fajle iz direktorija, kjer se trenutno nahajamo, v direktorij specificiran z WORKDIR komando.
+
+RUN npm install # Poženemo to komando. V našem primeru inštaliramo vse librarije
+
+EXPOSE 3000 # Odpremo port preko katerega komuniciramo s containerjem.
+
+ENTRYPOINT ["node", "app.js"] # Tu določimo, kako štartamo našo aplikacijo. Komanda mora biti v arrayu. Array ["node", "app.js"] bo translated v node app.js v terminalu.
+## END
+
+	Primer buildanja Docker imaga. Spodnja komanda ustvari image. Pika na koncu komande je pomembna, saj naslovi Docker in mu pove, kje se dockerfile nahaja. V tem primeru v direktoriju, kjer se nahajamo. Če OS imaga nimamo, potem vprašamo FROM comando, da image pulla iz Docker Huba in zbuilda naš specifičen image. Če se uspešno zbuilda, lahko vidimo s komando "docker images".
+docker build -t chrisnoring/node:latest .	
+
+
+	Primer kreiranja Docker containerja iz prej ustvajenega imaga. Container je izoliran del, ki znotraj poganja našo aplikacijo. Container zbuildamo s komando docker run. Komanda -p
+	docker run -p 8000:3000 chrisnoring/node. Pri tem s parametrom -p mapiramo eksterni (host) port 8000 s portom 3000 iz docker containerja. 
+docker run -p 8000:3000 chrisnoring/node
+	
+	Primer zgornjega Docker fila predelanega tako, da je PORT del nekoliko izboljšan. Trenutno se mora ujemati port, s katerim štartamo express server znotraj app.js, s portom specificiranim v Dockerfajlu. Da bi to popravili, moramo vnesti environment variable. To pomeni dve stvari:
+		1. add environment variable v Dockerfile
+		2. read iz environment variable v app.js
+	Ko smo spodnje spremembe izvedli, moramo ponovno zbuildati nov Docker image. Vedno je potrebno na novo zbuildati image, če delamo spremembe v Dockerfile, ali app.js aplikaciji.
+	
+# Dockerfile
+FROM node:latest
+
+WORKDIR /app
+
+COPY . .
+
+ENV PORT=3000 # Dodana environment variabla v Dockerfile.
+
+RUN npm install
+
+EXPOSE $PORT # Odprt port specificiran v $PORT environment variabli.
+
+ENTRYPOINT ["node", "app.js"]
+
+
+// app.js
+const express = require('express')
+
+const app = express()
+
+const port = process.env.PORT  // Beremo environment variablo.
+
+app.get('/', (req, res) => res.send('Hello World!')) // Če gremo na 192.168.10.196:8000/ (na root), dobimo Hello World!.
+
+app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+
+
+	Spremembe v Dockerfile, ali aplikaciji privedejo do tega, da moramo vedno znova ustaviti container, ga izbrisati in zbuildati nov image. Ker za to potrebujemo precej komand, bomo containerju dodelili ime (v primeru my-container). Ko ima ime, lahko nanj referiramo z imenom namesto ID:
+
+	// Naš updatan app.js file, zaradi katerega bomo morali zbuildati nov image.
+const express = require('express')
+
+const app = express()
+
+const port = process.env.PORT  // Beremo environment variablo.
+
+app.get('/', (req, res) => res.send('Hello Chris!')) // Sprememba, ki smo jo naredili. Zdaj bi moral izpisati Hello Chris!
+
+app.listen(port, () => console.log(`Example app listening on port ${port}!`))
+
+	Vse potrebne komande, da se spremembe poznajo:
+docker stop my-container // this will stop the container, it can still be started if we want to
+docker rm my-container // this will remove the container completely
+docker build -t chrisnoring/node . // creates an image
+docker run -d -p 8000:3000 --name my-container chrisnoring/node
+
+		Zgornje komande lahko zapišemo kot chain:
+	docker stop my-container && docker rm my-container && docker build -t chrisnoring/node . && docker run -d -p 8000:3000 --name my-container chrisnoring/node
+
+USING A VOLUME:
+	Boljši način, kot pisanje celotnih chain komand je z uporabo Volume. Volume je način, da ustvarimo prostor na hostu, kjer lahko pišemo fajle, ki se bodo ohranili. Ponavadi JSON fajli, ali SQLite baze.
+	Volume lahko ustvarimo bodisi preden kreiramo container, ali med tem ko kreiramo container.
+docker volume create [name of volume]
+docker volume ls ; lista volumov
+docker volume inspect my-volume ; inspecta volume z imenom my-volume. V vrstici "Mountpoint" vidimo, kam docker shranjuje fajle iz Volume na host mašino.
+docker volume prune ; izbriše vse volume, katerih trenutno ne uporablja noben container.
+
+	Primer komande, kjer kreiramo container in ob enem še volume z imenom my-volume. Folder /logs v containerju bo persistent in bo naš Volume:
+docker run -d -p 8000:3000 --name my-container --volume my-volume:/logs chrisnoring/node  
+
+	Primer komande, kjer ob kreaciji containerja še specificiramo, kateri folder iz hosta bo uporabljen kot volume containerja. V našem primeru folder /logs, ki se nahaja v trenutnem delovnem folderju (pwd). Vsebina voluma je vedno sinhronizirana med hostom in  mount pointom na containerju. To pomeni, da se bodo tudi obstoječi fajli iz mount pointa na containerju prenesli na hosta:
+docker run -d -p 8000:3000 --name my-container --volume $(pwd)/logs:/logs chrisnoring/node
+
+	Primer komande, kjer tretiramo celotno aplikacijo kot volume. To je uporabno zato, da se bodo spremembe na aplikaciji takoj poznale.
+	Vseeno moramo za vsako opravljeno spremembo v Node.js restartati Express Web server. To dosežemo na naslednje načine:
+		-inštaliramo library nodemon, ali forever, ki ob vsaki opravljeni spremembi na app.js restarta web server. Eleganten način.
+		-izvedemo PKILL komando, da ubijemo trenutni node.js proces in ponovno zaženemo node app.js.
+	Izbrali smo način z uporabo libraryja nodemon. To pomeni, da imamo zdaj nov library dependency v našem package.json fajlu (nahaja se v našem delovnem folderju). Ob enem bomo zdaj našo aplikacijo morali poganjati s komando "nodemon app.js", saj bo nodemon sam restartal web server. 
+	// V package.json v "scripts" delu dodamo vnos za start aplikacije z nodemon.
+	// Po defaultu se komande definirane v "scripts" poganjajo z "npm run [ime komande]. 
+	// Obstajajo pa tako imenovane "known commands" kot so start" in "test", ki jih lahko poganjamo brez "run". Tako lahko namesto "nmp run start" vpišemo samo  "npm start".
+	"scripts": {
+		"start": "nodemon app.js"
+	}
+	
+	V "scripts" del dodamo še komando "log". To komando pa je potrebno poganjati z "npm run log". 
+	// dodana še log komanda.
+	"scripts": {
+    "start": "nodemon app.js",
+    "log": "echo \"Logging something to screen\""
+    }
+	
+	Sprememniti moramo še Dockerfile iz ENTRYPOINT ["node", "app.js"] v ENTRYPOINT ["npm", "start"]. Ker smo naredili spremembo v Dockerfajlu, moramo ponovno zbuildati image: docker build -t chrisnoring/node .
+docker run -d -p 8000:3000 --name my-container --volume $(pwd):/app chrisnoring/node
+
+WORKING WITH DATABASES AND MYSQL
+	Osnove, ki smo jih naredili:
+	-Inštaliramo mysql na CentOS.
+	-root mysql password je: UrushiST18!
+	-Naredimo en fajl v linuxu (database.sql), z sql komandami, ki ga bomo sourcali v bazo. 
+	-mysql -u root -p
+	-CREATE DATABASE Customer;
+	-USE Customer;
+	-source /home/dragan/docker_vaje/database.sql ; uporabimo fajl, ki smo ga prej kreirali. Ta ustvari tabele.
+
+	Ustvarimo mysql container. V docker run komando dodamo parametre za inicializacijo baze in password:
+docker run --name mysql-db -e MYSQL_ROOT_PASSWORD=complexpassword -d -p 8001:3306 mysql
+
+	Od zunaj se na bazo povežemo preko porta 8001, saj je nanj forwardan port 3306 (od mysql).
+mysql -uroot -pcomplexpassword -h 0.0.0.0 -P 8001
+
+	Na tej container mysql kreiramo bazo "CREATE Customers".
+	
+	V naš app.js file na vrh dodamo spodnjo kodo. Če aplikacijo poženemo z node app.js, bi morali dobiti "Connected!" 
+const mysql = require('mysql');
+
+const con = mysql.createConnection({
+
+host: "localhost",
+
+port: 8001,
+
+user: "root",
+
+password: "complexpassword",
+
+database: 'Customers'
+
+});
+
+con.connect(function (err) {
+
+if (err) throw err;
+ console.log("Connected!");
+});	
+	
+Linkanje containerjev:
+	Ideja je, da containerji ne bi potrebovali informacij o IP in portu baze. App container in database container bi se morala zaznavati brez teh informacij. Naš obstoječi my-container je trenutno startan brez linka, zato ga moramo izkljuiti in izbrisati. Preden ga ponovno dvignemo pa moramo urediti kodo v app.js. Tu ne specificiramo več localhosta in porta 8001, saj bo link te informacije ugotovil sam. Vse kar moramo vedeti je, kateri alias smo dali containerju mysql. 
+	
+
+// Najprej v naš app.js vrh fajla uredimo tako:
+const con = mysql.createConnection({
+
+host: "mysql",
+
+user: "root",
+
+password: "complexpassword",
+
+database: 'Customers'
+
+});
+
+	Ker smo tako zamenjali kodo, kot tudi dodali nov library, moramo image rebuildati.
+docker build -t chrisnoring/node .
+
+	Zaženemo container, tokrat z linkom. Tu specificiramo, da ima naš my-container link na mysql-db container. Mysql-db containerju damo še alias "mysql" (ta je specificiran v app.js pod host). Ob preverbi "docker logs my-container" bi morali dobiti Connected!
+docker run -d -p 8000:3000 --name my-container --link mysql-db:mysql chrisnoring/node
+
+Linkanje containerjev - novi način
+	Način linkanja, ki smo ga spoznali zgoraj je legacy način. Novi način se imenuje "creating networks", ali "custom bridge networks". Network, ki je skupen določenim containerjem. Container lahko obstaja v več networkih. 
+
+	1. Najprej naredimo network z naslednjo komando:
+docker network create --driver bridge isolated_network
+
+	2. Nato zaženemo container z našo aplikacijo in mu dodamo network argument:
+docker run -d -p 8000:3000 --net isolated_network --name my-container chrisnoring/node
+
+	3. Zaženemo še naš container z mysql:
+docker run -p 8001:3306 --net isolated_network --name mysql-db -e MYSQL_ROOT_PASSWORD=complexpassword -d mysql
+
+
+DOCKER COMPOSE:
+Namesto, da bi pisal komande za vsak service, lahko definiramo vse service v en file imenovan docker-compose-yaml. Znotraj tega fajla lahko konfiguriramo naslednje:
+	Build; specificiramo building kontekst in ime Dockerfile, če nima recimo standardnega imena.
+	Environment; definiramo lahko mnogo environment spremenljivk.
+	Image; namesto da buildamo image iz nule, uporabimo pripravljene image, ki jih pullamo iz Docker Huba.
+	Networks; ustvarimo networke in specificiramo, če, ali v kateri network spada service.
+	Ports; definiramo port forwarding. Kam se bo interni port na containerju forwardal na eksterni port na hostu.
+	Volumes; definiramo volume.
+	
+// docker-compose.yaml	
+version: '3'
+services:
+  product-service:
+    build:
+      context: ./product-service
+    ports:
+      - "8000:3000"
+
+services; samo en v celotnem docker-compose.yaml fajlu. Konča se z : . To potrebujemo, drugače ni veljavna sintaksa.
+
+product-service; ime našega servica.
+
+build; navodila, kako naj Docker Compose zbuilda image. Če imamo image že pripravljen, potem tega ne rabimo specificirati.
+
+context; povemo, kje se Dockerfile nahaja. V našem primeru je navedeno, da mora iti en level navzdol v mapo product-service.
+
+ports; Port forwarding v katerem najprej specificiramo external port (host) in nato internal port (container).
+
+	Zgornje korespondira v naslednje komande:
+docker build -t [default name]/product-service .
+docker run -p 8000:3000 --name [default name]/product-service
+
+	V našo product-services podmpo moramo dodati še Dockerfile (primer je zgoraj v teh navodilih). Buildanje sprožimo z:
+docker-compose build; nahajati se moramo v mapi, kjer je docker-compose.yaml. Naš image bo imel ime docker_vaje_product-service. Ime je sestavljeno iz direktorija kjer se nahajamo in drugega dela, ki je ime servica v docker-compose.yaml.
+
+docker-compose up -d; ta komanda še enkrat prebere docker-compose.yaml, ampak tokrat kreira in zažene container. Dodan je še flag -d, da se zažene v ozadje.
+
+
+
+
+
+
+
+
+
+
+
+	

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap # kind je tu seveda ConfigMap
+metadata:
+  name: demo-configmap # ime našega ConfigMapa
+data: # definiramo dva key/value paira.
+  channel.name: "justmeandopensource"
+  channel.owner: "Venkat Nagappan"

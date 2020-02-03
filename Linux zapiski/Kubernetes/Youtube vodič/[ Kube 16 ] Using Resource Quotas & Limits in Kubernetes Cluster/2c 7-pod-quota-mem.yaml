@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+  namespace: quota-demo-ns
+spec:
+  containers:
+  - image: nginx
+    name: nginx
+    resources:
+      limits:
+        memory: "800Mi" # Memory limit od poda dvignemo na 800MB, kar je več kot 500MB, ki je omejitev namespaca.

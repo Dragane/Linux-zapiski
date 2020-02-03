@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox
+spec:
+  volumes:
+  - name: host-volume # samo ime voluma. Ni potrebno, da se ujema z imenom persistent voluma.
+    persistentVolumeClaim:
+      claimName: pvc-hostpath # ime claima, ki smo ga prej ustvarili.
+  containers:
+  - image: busybox
+    name: busybox
+    command: ["/bin/sh"]
+    args: ["-c", "sleep 600"]
+    volumeMounts:
+    - name: host-volume # to ime se mora ujemati z imenom voluma, ki smo ga zgoraj v fajlu definirali.
+      mountPath: /mydata # kam bomo ta volume mountali. Znotraj /mydata folderja.
+  nodeSelector: # uporabimo nodeSelector, da naj gre pod na node z lablom demoserver: "true". To bo pri nas kworker2, ki nima PV mape /kube. Nodeselector ne dodamo pod containers: saj so to specifikacije poda, ne containerja.
+    demoserver: "true" 

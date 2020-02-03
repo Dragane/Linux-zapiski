@@ -1,0 +1,135 @@
+﻿$PATH: environment variable. V mapah navedenih v sistemski spremenljivki, sistem ièe executable. Èe se program, ki ga elimo zagnati nahaja v mapi, ki ni navedena v $PATH, pa se program executa z ./ (najprej se postavimo v mapo in nato npr. ./testme)
+
+
+which: (which find) "which" in nato ime programa nam pokae celotno pot programa, ki ga ièemo in je naveden v $PATH.
+
+
+find: (find /etc/ufw -name '*.conf') poišče vse fajle s končnico .conf v izbrani mapi
+
+
+locate: (locate .bash_history) se uporablja, ko poznamo ime fajla, ki ga želimo poiskati
+
+
+Pipes
+-------
+date > current_date.txt (datum da v tekstovno datoteko, ki se bo imenovala current_date.txt)
+
+
+echo 'More text' >> current_date.txt (v že obstoječ fajl current_date.txt doda More text v novo vrstico)
+
+
+Spreminjanje $PATH: (PATH=$PATH:/tmp) $PATH smo dodali :/tmp. Da smo poleg tega ohranili še originalne vrednosti, je bilo potrebno dodati še $PATH pred :/tmp. Preverimo z ukazom "echo $PATH"
+
+
+history: (history | grep cd) spisek predhodnih uporabljenih komand. Komande se shranjujejo v .bash_history fajlu, ki je vsakemu userju specifičen. grep cd poišče samo komande, ki so vsebovale cd
+
+
+Skripte
+-------
+#! /bin/bash (prva vrstica v skripti. # pove, da je zadeva zakomentirana. ! pove kateri shell naj skripto executa.)
+
+if [ -f "myfile.txt" ] #če myfile.txt obstaja
+then
+	echo "Sorry, file already exists." #izpiši, če myfile.txt obstaja
+else
+	echo "Content for file" > myfile.txt #(ustvari fajl myfile.txt in vanj vpiši tekst "Content for file")
+fi #(konec funkcije)
+ls -l myfile.txt #(izpiši podatke o fajlu)
+
+
+chmod +x prva_skripta: dovolimo skripti izvajanje
+./prva_skripta: skripto poženemo
+
+
+Accounts
+--------
+whoami: user, ki trenutno uporablja shell
+
+
+Disk management
+--------
+Preveri kaj je LVM!
+quota: program za dajanje določene kapacitete diska določenemu userju
+
+
+AppArmor: preveri kaj je ta program. Moral bi biti za policyje pa te fore. Drugi je SELinux.
+
+
+KeePassX (GUI): poglej kakšen vodič za ta prog. za shranjevanje passwordov.
+
+
+Processes and services
+-------
+daemon: service v Linux žargonu
+Programi s končnico "d" (sshd) so daemoni (servici ki tečejo za določen program)
+
+
+initctl: aplikacija za start/stop določenega daemona (sudo initctl start ssh). Ponuja kontrolo nad init daemonom. To je poseben daemon, ki se zažene med boot procesom in je starš vsem servicom in procesom. Navadno ima PID 1. Linux Mint ima specifičen event-based daemon imenovan Upstart. Initctl vedno poganjamo kot root.
+
+
+Services Settings (GUI): moral bi biti GUI za dodajanje servicov ob bootu. Tega programa nisem našel v mintu. Povprašaj na IRCu
+
+
+System Monitor (GUI): neke vrste task manager
+
+
+Troubleshooting
+-------
+lsusb: list of usb devices
+lspci: list of PCI devices
+
+sudo lshw: detailed list of all hardware
+
+cat /proc/meminfo: memory info
+cat /proc/cpuinfo: cpu info
+
+/var/log: tu se nahajajo logi. Eden pomembnejših je syslog.
+
+tail -5 /var/log/syslog: izpiše zadnjih 5 vnosov v syslogu
+
+
+Kernel
+--------
+Linux kernel uporablja module. To so komponente ki razširijo funkcionalnost kernela in jih je možno loadati/unloadati brez reboota.
+
+lsmod: zlista vse loadane module. V bistvu zlista vsebino /proc/modules fajla.
+
+modprobe -l: zlista vse module, ki jih je možno loadati
+
+dmesg | more: Pridobi informacije povezane z operacijami kernela npr. priključimo USB napravo. Kernel kreira log message, ki ga preberemo z ukazom dmesg. "| more" pipe je tu za lažje branje.
+
+
+Networking
+-------
+netstat: (netstat -tln pokaže katere aplikacije poslušajo na katerih portih) Če zaženemo netstat brez argumentov, nam pokaže vso mrežno aktivnost računalnika.
+
+
+Processes and filesystems
+--------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
